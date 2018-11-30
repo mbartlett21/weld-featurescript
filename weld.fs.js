@@ -23,10 +23,8 @@ import(path : "onshape/std/topologyUtils.fs", version : "951.0");
 import(path : "onshape/std/units.fs", version : "951.0");
 import(path : "onshape/std/valueBounds.fs", version : "951.0");
 import(path : "onshape/std/vector.fs", version : "951.0");
-import(path : "onshape/std/debug.fs", version : "951.0");
 
 // Bounds and enums {
-
 /**
  * Density bounds.
  */
@@ -92,11 +90,8 @@ export enum VButtShape
     FLAT
 }
 
-// }
+// Bounds and enums }
 
-/**
- * Command to create custom welds
- */
 annotation { "Feature Type Name" : "Weld" }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
@@ -121,7 +116,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             annotation { "Name" : "Max weld gap" }
             isLength(definition.filletWeldGap, SHELL_OFFSET_BOUNDS);
 
-            annotation { "Name" : "Tangent propagation", "Default" : true }
+            annotation { "Name" : "Tangent propagation" }
             definition.filletPropagation is boolean;
 
             annotation { "Name" : "Corner style", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
@@ -160,18 +155,17 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
     }
     {
         var toDelete = new box([]);
-
         if (definition.weldType == WeldType.FILLET_WELD)
         {
             filletWeld(context, id, definition, toDelete);
         }
         else if (definition.weldType == WeldType.V_BUTT_WELD)
         {
-            // vButtWeld(context, id, definition);
+            vButtWeld(context, id, definition, toDelete);
         }
         else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
         {
-            // doubleVButtWeld(context, id, definition);
+            doubleVButtWeld(context, id, definition, toDelete);
         }
         else
             throw regenError("Weld type not supported", ["weldType"]);
@@ -873,6 +867,7 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
     //                     "parameter" : 0
     //                 }));
 
+
     var intersection = intersection(face1Plane, face2Plane);
 
     var skPlane = plane(project(intersection, distResult.sides[0].point), intersection.direction);
@@ -953,7 +948,6 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
                         "templateFace" : face1,
                         "oppositeSense" : true
                     }));
-
     if (evaluateQuery(context, weldFace2) != [])
         try(opReplaceFace(context, id + "replaceFace2", {
                         "replaceFaces" : weldFace2,
@@ -964,7 +958,7 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
     return qCreatedBy(id + "sweep", EntityType.BODY);
 }
 
-// }
+// Fillet functions }
 
 // V-Butt Weld functions {
 
@@ -1385,7 +1379,7 @@ function doubleVButtWeld(context is Context, id is Id, definition is map, toDele
     setWeldNumbers(context, qCreatedBy(id + "extrude2", EntityType.BODY), "Double V-Butt");
 }
 
-// }
+// V-Butt Weld functions }
 
 // Utility functions {
 
@@ -1546,4 +1540,4 @@ function doMiter(context is Context, id is Id, face1 is Query, face2 is Query)
     }
 }
 
-// }
+// Utility functions }
