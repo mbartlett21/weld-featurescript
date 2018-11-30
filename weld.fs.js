@@ -13,9 +13,9 @@ export enum WeldType
 
 export enum FilletShape
 {
-    annotation { "Name" : "Convex" }
+    annotation { "Name" : "Convexo" }
     CONVEX,
-    annotation { "Name" : "Concave" }
+    annotation { "Name" : "Concavo" }
     CONCAVE
 }
 
