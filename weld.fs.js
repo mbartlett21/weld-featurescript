@@ -34,6 +34,19 @@ export const DENSITY_BOUNDS = {
         } as RealBoundSpec;
 
 /**
+* Feature and settings options
+* @value WELD_CMD : Weld Feature.
+* @value WELD_CMD : Weld Settings.
+*/
+export enum WeldCmdCfg
+{
+    annotation { "Name" : "Welds" }
+    WELD_CMD,
+    annotation { "Name" : "Settings" }
+    WELD_CFG
+}
+
+/**
  * Specifies the type of welding.
  * @value FILLET_WELD : Fillet weld.
  * @value V_BUTT_WELD : V-Butt weld (beta).
@@ -97,8 +110,13 @@ annotation { "Feature Type Name" : "Weld" }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
-        annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-        definition.weldType is WeldType;
+           annotation { "Name" : "Weld Settings", "UIHint" : ["HORIZONTAL_ENUM", "REMEMBER_PREVIOUS_VALUE"] }
+           definition.weldCmdCfg is WeldCmdCfg;
+                        
+           if (definition.weldCmdCfg == WeldCmdCfg.WELD_CMD)
+           {
+              annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+           definition.weldType is WeldType;
 
         if (definition.weldType == WeldType.FILLET_WELD)
         {
@@ -147,12 +165,15 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 isLength(definition.vButtRootGapHeight, SHELL_OFFSET_BOUNDS);
             }
         }
+           }                     
+           else
+           {
+                    annotation { "Name" : "Density (g/cm^3)", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isReal(definition.density, DENSITY_BOUNDS);
 
-        annotation { "Name" : "Density (g/cm^3)", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-        isReal(definition.density, DENSITY_BOUNDS);
-
-        annotation { "Name" : "Exclude from BOM", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
-        definition.excludeFromBom is boolean;
+                    annotation { "Name" : "Exclude from BOM", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+                    definition.excludeFromBom is boolean;
+           }
     }
     {
         var toDelete = new box([]);
