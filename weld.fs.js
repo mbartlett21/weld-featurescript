@@ -97,7 +97,7 @@ annotation { "Feature Type Name" : "Weld" }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
-        annotation { "Name" : "Weld Type", "UIHint" : ["HORIZONTAL_ENUM", "REMEMBER_PREVIOUS_VALUE"] }
+        annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
         definition.weldType is WeldType;
 
         if (definition.weldType == WeldType.FILLET_WELD)
