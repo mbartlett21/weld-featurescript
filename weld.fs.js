@@ -1,6 +1,5 @@
 FeatureScript 951;
 
-
 // This module is distributed under the MIT License.
 // See the LICENSE tab for the license text.
 // Support and maintenance: https://github.com/mbartlett21/weld-featurescript
@@ -132,9 +131,6 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
             isLength(definition.filletSize, BLEND_BOUNDS);
 
-            annotation { "Name" : "Max weld gap" }
-            isLength(definition.filletWeldGap, SHELL_OFFSET_BOUNDS);
-
             annotation { "Name" : "Tangent propagation" }
             definition.filletPropagation is boolean;
 
@@ -197,7 +193,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                         "entities" : qUnion(toDelete[])
                     });
 
-        try
+        if (evaluateQuery(context, qCreatedBy(id, EntityType.BODY)) != [])
         {
             setProperty(context, {
                         "entities" : qCreatedBy(id, EntityType.BODY),
@@ -217,6 +213,8 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                         "value" : definition.excludeFromBom
                     });
         }
+        else
+            throw regenError("Weld failed");
     });
 
 // Fillet functions {
@@ -256,7 +254,7 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                             "side0" : faces1[i],
                             "side1" : faces2[j]
                         }).distance;
-                if (dist > definition.filletWeldGap && !tolerantEquals(definition.filletWeldGap, dist))
+                if (dist > definition.filletSize && !tolerantEquals(definition.filletSize, dist))
                     continue;
                 var filletDef = {
                     "face1" : faces1[i],
@@ -268,10 +266,8 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                     "filletPropagation" : definition.filletPropagation
                 };
                 setExternalDisambiguation(context, filletId, filletDef.face1);
-                if (faceDefs1[i] is Plane && faceDefs2[j] is Plane && perpendicularVectors(faceDefs1[i].normal, faceDefs2[j].normal))
-                    weldPart = filletWeldPlanar90(context, filletId, filletDef, toDelete, endFaces);
 
-                else if (faceDefs1[i] is Plane && faceDefs2[j] is Plane)
+                if (faceDefs1[i] is Plane && faceDefs2[j] is Plane)
                     weldPart = filletWeldPlanar(context, filletId, filletDef, toDelete, endFaces);
 
                 else if (!(faceDefs1[i] is Plane) && faceDefs2[j] is Plane)
@@ -287,6 +283,8 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                             });
                     weldPart = filletWeldNonPlanarPlanar(context, filletId, filletDef, toDelete, endFaces);
                 }
+                else
+                    reportFeatureInfo(context, id, "Non-Planar to Non-Planar welds are not supported yet.");
                 if (weldPart is Query)
                     welds = append(welds, weldPart);
             }
@@ -310,276 +308,6 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                     "operationType" : BooleanOperationType.UNION
                 });
     setWeldNumbers(context, qUnion(welds), "Fillet");
-}
-
-function filletWeldPlanar90(context is Context, id is Id, definition is map, toDelete is box, endFaces is box)
-{
-    var face1 = definition.face1;
-    var face1Plane = definition.face1Def;
-
-    var face2 = definition.face2;
-    var face2Plane = definition.face2Def;
-
-    var shape is FilletShape = definition.filletShape;
-
-    var intersectionLine = intersection(face1Plane, face2Plane);
-
-    if (intersectionLine is undefined)
-        return;
-
-    var skPlane = plane(intersectionLine.origin, intersectionLine.direction);
-    var face1Dir = cross(skPlane.normal, face1Plane.normal);
-
-    var face2Dir = -cross(skPlane.normal, face2Plane.normal);
-
-    var angle = angleBetween(face1Dir, face2Dir);
-    var size = definition.filletSize / sin(angle);
-
-    var face1Point = worldToPlane(skPlane, intersectionLine.origin + face1Dir * size);
-    var face1SkDir = normalize(face1Point);
-    var face1PSkDir = -normalize(worldToPlane(skPlane, skPlane.origin - face2Plane.normal * meter));
-
-    var face2Point = worldToPlane(skPlane, intersectionLine.origin + face2Dir * size);
-    var face2SkDir = normalize(face2Point);
-    var face2PSkDir = -normalize(worldToPlane(skPlane, skPlane.origin - face1Plane.normal * meter));
-    var dist = size * cos(angle / 2); // Distance of a straight line out
-
-    // Sketch
-    var sketch = newSketchOnPlane(context, id + "sketch", {
-            "sketchPlane" : skPlane
-        });
-    skLineSegment(sketch, "face1Line", {
-                "start" : -face2PSkDir * TOLERANCE.booleanDefaultTolerance * meter - face1PSkDir * TOLERANCE.booleanDefaultTolerance * meter,
-                "end" : face1Point - face2PSkDir * TOLERANCE.booleanDefaultTolerance * meter
-            });
-    skLineSegment(sketch, "face2Line", {
-                "start" : -face2PSkDir * TOLERANCE.booleanDefaultTolerance * meter - face1PSkDir * TOLERANCE.booleanDefaultTolerance * meter,
-                "end" : face2Point - face1PSkDir * TOLERANCE.booleanDefaultTolerance * meter
-            });
-    skLineSegment(sketch, "face1Line2", {
-                "start" : face1Point,
-                "end" : face1Point - face2PSkDir * TOLERANCE.booleanDefaultTolerance * meter
-            });
-    skLineSegment(sketch, "face2Line2", {
-                "start" : face2Point,
-                "end" : face2Point - face1PSkDir * TOLERANCE.booleanDefaultTolerance * meter
-            });
-    skArc(sketch, "arc", {
-                "start" : face1Point,
-                "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == FilletShape.CONVEX ? 1.15 : 0.75),
-                "end" : face2Point
-            });
-    skSolve(sketch);
-    toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
-
-    var faceTracking1 = startTracking(context, qSubtraction(qIntersection([qEdgeAdjacent(face1, EntityType.FACE), qTangentConnectedFaces(face1)]), face1));
-    var faceTracking2 = startTracking(context, qSubtraction(qIntersection([qEdgeAdjacent(face2, EntityType.FACE), qTangentConnectedFaces(face2)]), face2));
-
-    // Weld Faces
-    var weldFace1 = qUnion([
-            qEntityFilter(startTracking(context, id + "sketch", "face1Line"), EntityType.FACE),
-            faceTracking1
-        ]);
-    var weldFace2 = qUnion([
-            qEntityFilter(startTracking(context, id + "sketch", "face2Line"), EntityType.FACE),
-            faceTracking2
-        ]);
-
-    // Sketch face
-    var sketchFace = qCreatedBy(id + "sketch", EntityType.FACE);
-
-    var extrudeDef = {
-        "entities" : sketchFace,
-        "direction" : skPlane.normal,
-        "startBound" : BoundingType.THROUGH_ALL,
-        "endBound" : BoundingType.THROUGH_ALL
-    };
-    var extrudeId = id + "extrude";
-    try
-    {
-        opExtrude(context, extrudeId, extrudeDef);
-        var subId = id + "trim";
-        // Offset weld faces
-        // opOffsetFace(context, subId + "offsetFaces", {
-        //             "moveFaces" : qUnion([weldFace1, weldFace2]),
-        //             "offsetDistance" : TOLERANCE.booleanDefaultTolerance * meter
-        //         });
-
-        // Boolean part from weld
-        opBoolean(context, subId + "boolean", {
-                    "tools" : qUnion([qOwnerBody(face1), qOwnerBody(face2)]),
-                    "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
-                    "operationType" : BooleanOperationType.SUBTRACTION,
-                    "keepTools" : true
-                });
-
-        // Cut weld
-        if (evaluateQuery(context, weldFace1) != [])
-            opExtrude(context, subId + "extrude1", {
-                        "entities" : weldFace1,
-                        "direction" : face2Dir,
-                        "endBound" : BoundingType.THROUGH_ALL
-                    });
-
-        if (evaluateQuery(context, weldFace2) != [])
-            opExtrude(context, subId + "extrude2", {
-                        "entities" : weldFace2,
-                        "direction" : face1Dir,
-                        "endBound" : BoundingType.THROUGH_ALL
-                    });
-
-        if (evaluateQuery(context, qUnion([qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)])) != [])
-            opBoolean(context, subId + "booleanCut", {
-                        "tools" : qUnion([qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)]),
-                        "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
-                        "operationType" : BooleanOperationType.SUBTRACTION
-                    });
-
-        // Extend faces to part again
-        var faceQ1 = qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face1Plane.normal, false);
-        var faceQ2 = qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face2Plane.normal, false);
-        if (evaluateQuery(context, faceQ1) != [])
-            opReplaceFace(context, subId + "replaceFace1", {
-                        "replaceFaces" : faceQ1,
-                        "templateFace" : face1,
-                        "oppositeSense" : true
-                    });
-        if (evaluateQuery(context, faceQ2) != [])
-            opReplaceFace(context, subId + "replaceFace2", {
-                        "replaceFaces" : faceQ2,
-                        "templateFace" : face2,
-                        "oppositeSense" : true
-                    });
-
-        // Endfaces for rounded ends
-        endFaces[] = append(endFaces[], qCapEntity(id + "extrude", CapType.EITHER, EntityType.FACE));
-        endFaces[] = append(endFaces[], qSubtraction(
-                    qCreatedBy(subId + "booleanCut", EntityType.FACE),
-                    qUnion([
-                            qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face1Plane.normal, false),
-                            qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face2Plane.normal, false)
-                        ])
-                ));
-    }
-    catch
-    {
-        extrudeId = id + "extrudeOld";
-        toDelete[] = append(toDelete[], qCreatedBy(id + "extrude"));
-
-        var cSys = planeToCSys(skPlane);
-        var faceBox1 = evBox3d(context, {
-                "topology" : face1,
-                "tight" : true,
-                "cSys" : cSys
-            });
-        var faceBox2 = evBox3d(context, {
-                "topology" : face2,
-                "tight" : true,
-                "cSys" : cSys
-            });
-        var maxDist = min(faceBox1.maxCorner[2], faceBox2.maxCorner[2]);
-        var minDist = max(faceBox1.minCorner[2], faceBox2.minCorner[2]);
-        extrudeDef = {
-                "entities" : sketchFace,
-                "direction" : skPlane.normal,
-                "startBound" : BoundingType.BLIND,
-                "endBound" : BoundingType.BLIND,
-                "isStartBoundOpposite" : minDist < 0,
-                "endDepth" : maxDist,
-                "startDepth" : abs(minDist)
-            };
-
-        // These track tangent faces, so it can trim properly
-        var faceTracking1 = startTracking(context, qSubtraction(
-                qIntersection([
-                        qEdgeAdjacent(face1, EntityType.FACE),
-                        qTangentConnectedFaces(face1)
-                    ]),
-                face1
-            ));
-        var faceTracking2 = startTracking(context, qSubtraction(
-                qIntersection([
-                        qEdgeAdjacent(face2, EntityType.FACE),
-                        qTangentConnectedFaces(face2)
-                    ]),
-                face2
-            ));
-
-        // Weld Faces
-        var weldFace1 = qUnion([
-                qEntityFilter(startTracking(context, id + "sketch", "face1Line"), EntityType.FACE),
-                faceTracking1
-            ]);
-        var weldFace2 = qUnion([
-                qEntityFilter(startTracking(context, id + "sketch", "face2Line"), EntityType.FACE),
-                faceTracking2
-            ]);
-
-        opExtrude(context, extrudeId, extrudeDef);
-
-        var subId = id + "trimOld";
-        try
-        {
-            // Offset weld faces
-            // opOffsetFace(context, subId + "offsetFaces", {
-            //             "moveFaces" : qUnion([weldFace1, weldFace2]),
-            //             "offsetDistance" : TOLERANCE.booleanDefaultTolerance * meter
-            //         });
-
-            // Boolean part from weld
-            opBoolean(context, subId + "boolean", {
-                        "tools" : qUnion([qOwnerBody(face1), qOwnerBody(face2)]),
-                        "targets" : qCreatedBy(id + "extrudeOld", EntityType.BODY),
-                        "operationType" : BooleanOperationType.SUBTRACTION,
-                        "keepTools" : true
-                    });
-
-            // Cut weld
-            if (evaluateQuery(context, weldFace1) != [])
-                opExtrude(context, subId + "extrude1", {
-                            "entities" : weldFace1,
-                            "direction" : face2Dir,
-                            "endBound" : BoundingType.THROUGH_ALL
-                        });
-
-            if (evaluateQuery(context, weldFace2) != [])
-                opExtrude(context, subId + "extrude2", {
-                            "entities" : weldFace2,
-                            "direction" : face1Dir,
-                            "endBound" : BoundingType.THROUGH_ALL
-                        });
-
-            if (evaluateQuery(context, qUnion([qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)])) != [])
-                opBoolean(context, subId + "booleanCut", {
-                            "tools" : qUnion([qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)]),
-                            "targets" : qCreatedBy(id + "extrudeOld", EntityType.BODY),
-                            "operationType" : BooleanOperationType.SUBTRACTION
-                        });
-
-            // Extend faces to part again
-            var faceQ1 = qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face1Plane.normal, false);
-            var faceQ2 = qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face2Plane.normal, false);
-            if (evaluateQuery(context, faceQ1) != [])
-                opReplaceFace(context, subId + "replaceFace1", {
-                            "replaceFaces" : faceQ1,
-                            "templateFace" : face1,
-                            "oppositeSense" : true
-                        });
-            if (evaluateQuery(context, faceQ2) != [])
-                opReplaceFace(context, subId + "replaceFace2", {
-                            "replaceFaces" : faceQ2,
-                            "templateFace" : face2,
-                            "oppositeSense" : true
-                        });
-
-            // Endfaces for rounded ends
-            endFaces[] = append(endFaces[], qCapEntity(id + "extrude", CapType.EITHER, EntityType.FACE));
-
-            // More end faces
-            endFaces[] = append(endFaces[], qSubtraction(qCreatedBy(subId + "booleanCut", EntityType.FACE), qUnion([qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face1Plane.normal, false), qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face2Plane.normal, false)])));
-        }
-    }
-    return qCreatedBy(extrudeId, EntityType.BODY);
 }
 
 function filletWeldPlanar(context is Context, id is Id, definition is map, toDelete is box, endFaces is box)
@@ -632,19 +360,6 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     skSolve(sketch);
     toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
 
-    var faceTracking1 = startTracking(context, qSubtraction(qIntersection([qEdgeAdjacent(face1, EntityType.FACE), qTangentConnectedFaces(face1)]), face1));
-    var faceTracking2 = startTracking(context, qSubtraction(qIntersection([qEdgeAdjacent(face2, EntityType.FACE), qTangentConnectedFaces(face2)]), face2));
-
-    // Weld Faces
-    var weldFace1 = qUnion([
-            qEntityFilter(startTracking(context, id + "sketch", "face1Line"), EntityType.FACE),
-            faceTracking1
-        ]);
-    var weldFace2 = qUnion([
-            qEntityFilter(startTracking(context, id + "sketch", "face2Line"), EntityType.FACE),
-            faceTracking2
-        ]);
-
     // Sketch face
     var sketchFace = qCreatedBy(id + "sketch", EntityType.FACE);
 
@@ -655,190 +370,50 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
         "endBound" : BoundingType.THROUGH_ALL
     };
     var extrudeId = id + "extrude";
-    try
-    {
-        opExtrude(context, extrudeId, extrudeDef);
-        var subId = id + "trim";
-        // Offset weld faces
-        opOffsetFace(context, subId + "offsetFaces", {
-                    "moveFaces" : qUnion([weldFace1, weldFace2]),
-                    "offsetDistance" : TOLERANCE.booleanDefaultTolerance * meter
+
+    opExtrude(context, extrudeId, extrudeDef);
+    var subId = id + "trim";
+
+    // Cut weld
+    opExtrude(context, subId + "extrude1", {
+                "entities" : face1,
+                "direction" : face2Dir,
+                "endBound" : BoundingType.THROUGH_ALL
+            });
+
+    opExtrude(context, subId + "extrude2", {
+                "entities" : face2,
+                "direction" : face1Dir,
+                "endBound" : BoundingType.THROUGH_ALL
+            });
+
+    opBoolean(context, subId + "booleanCut", {
+                "tools" : qUnion([qCreatedBy(extrudeId, EntityType.BODY), qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)]),
+                "operationType" : BooleanOperationType.INTERSECTION
+            });
+
+    // Extend faces to part again
+    var faceQ1 = qParallelPlanes(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), -face1Plane.normal, false);
+    var faceQ2 = qParallelPlanes(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), -face2Plane.normal, false);
+    if (evaluateQuery(context, faceQ1) != [])
+        opReplaceFace(context, subId + "replaceFace1", {
+                    "replaceFaces" : faceQ1,
+                    "templateFace" : face1,
+                    "oppositeSense" : true
+                });
+    if (evaluateQuery(context, faceQ2) != [])
+        opReplaceFace(context, subId + "replaceFace2", {
+                    "replaceFaces" : faceQ2,
+                    "templateFace" : face2,
+                    "oppositeSense" : true
                 });
 
-        // Boolean part from weld
-        opBoolean(context, subId + "boolean", {
-                    "tools" : qUnion([qOwnerBody(face1), qOwnerBody(face2)]),
-                    "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
-                    "operationType" : BooleanOperationType.SUBTRACTION,
-                    "keepTools" : true
-                });
-
-        // Cut weld
-        if (evaluateQuery(context, weldFace1) != [])
-            opExtrude(context, subId + "extrude1", {
-                        "entities" : weldFace1,
-                        "direction" : face2Dir,
-                        "endBound" : BoundingType.THROUGH_ALL
-                    });
-
-        if (evaluateQuery(context, weldFace2) != [])
-            opExtrude(context, subId + "extrude2", {
-                        "entities" : weldFace2,
-                        "direction" : face1Dir,
-                        "endBound" : BoundingType.THROUGH_ALL
-                    });
-
-        if (evaluateQuery(context, qUnion([qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)])) != [])
-            opBoolean(context, subId + "booleanCut", {
-                        "tools" : qUnion([qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)]),
-                        "targets" : qCreatedBy(id + "extrude", EntityType.BODY),
-                        "operationType" : BooleanOperationType.SUBTRACTION
-                    });
-
-        // Extend faces to part again
-        var faceQ1 = qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face1Plane.normal, false);
-        var faceQ2 = qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face2Plane.normal, false);
-        if (evaluateQuery(context, faceQ1) != [])
-            opReplaceFace(context, subId + "replaceFace1", {
-                        "replaceFaces" : faceQ1,
-                        "templateFace" : face1,
-                        "oppositeSense" : true
-                    });
-        if (evaluateQuery(context, faceQ2) != [])
-            opReplaceFace(context, subId + "replaceFace2", {
-                        "replaceFaces" : faceQ2,
-                        "templateFace" : face2,
-                        "oppositeSense" : true
-                    });
-
-        // Endfaces for rounded ends
-        endFaces[] = append(endFaces[], qCapEntity(id + "extrude", CapType.EITHER, EntityType.FACE));
-        endFaces[] = append(endFaces[], qSubtraction(
-                    qCreatedBy(subId + "booleanCut", EntityType.FACE),
-                    qUnion([
-                            qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face1Plane.normal, false),
-                            qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face2Plane.normal, false)
-                        ])
-                ));
-    }
-    catch
-    {
-        extrudeId = id + "extrudeOld";
-        toDelete[] = append(toDelete[], qCreatedBy(id + "extrude"));
-
-        var cSys = planeToCSys(skPlane);
-        var faceBox1 = evBox3d(context, {
-                "topology" : face1,
-                "tight" : true,
-                "cSys" : cSys
-            });
-        var faceBox2 = evBox3d(context, {
-                "topology" : face2,
-                "tight" : true,
-                "cSys" : cSys
-            });
-        var maxDist = min(faceBox1.maxCorner[2], faceBox2.maxCorner[2]);
-        var minDist = max(faceBox1.minCorner[2], faceBox2.minCorner[2]);
-        extrudeDef = {
-                "entities" : sketchFace,
-                "direction" : skPlane.normal,
-                "startBound" : BoundingType.BLIND,
-                "endBound" : BoundingType.BLIND,
-                "isStartBoundOpposite" : minDist < 0,
-                "endDepth" : maxDist,
-                "startDepth" : abs(minDist)
-            };
-
-        // These track tangent faces, so it can trim properly
-        var faceTracking1 = startTracking(context, qSubtraction(
-                qIntersection([
-                        qEdgeAdjacent(face1, EntityType.FACE),
-                        qTangentConnectedFaces(face1)
-                    ]),
-                face1
-            ));
-        var faceTracking2 = startTracking(context, qSubtraction(
-                qIntersection([
-                        qEdgeAdjacent(face2, EntityType.FACE),
-                        qTangentConnectedFaces(face2)
-                    ]),
-                face2
+    // Endfaces for rounded ends
+    endFaces[] = append(endFaces[], qSubtraction(
+                qGeometry(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), GeometryType.PLANE),
+                qUnion([faceQ1, faceQ2])
             ));
 
-        // Weld Faces
-        var weldFace1 = qUnion([
-                qEntityFilter(startTracking(context, id + "sketch", "face1Line"), EntityType.FACE),
-                faceTracking1
-            ]);
-        var weldFace2 = qUnion([
-                qEntityFilter(startTracking(context, id + "sketch", "face2Line"), EntityType.FACE),
-                faceTracking2
-            ]);
-
-        opExtrude(context, extrudeId, extrudeDef);
-
-        var subId = id + "trimOld";
-        try
-        {
-            // Offset weld faces
-            opOffsetFace(context, subId + "offsetFaces", {
-                        "moveFaces" : qUnion([weldFace1, weldFace2]),
-                        "offsetDistance" : TOLERANCE.booleanDefaultTolerance * meter
-                    });
-
-            // Boolean part from weld
-            opBoolean(context, subId + "boolean", {
-                        "tools" : qUnion([qOwnerBody(face1), qOwnerBody(face2)]),
-                        "targets" : qCreatedBy(id + "extrudeOld", EntityType.BODY),
-                        "operationType" : BooleanOperationType.SUBTRACTION,
-                        "keepTools" : true
-                    });
-
-            // Cut weld
-            if (evaluateQuery(context, weldFace1) != [])
-                opExtrude(context, subId + "extrude1", {
-                            "entities" : weldFace1,
-                            "direction" : face2Dir,
-                            "endBound" : BoundingType.THROUGH_ALL
-                        });
-
-            if (evaluateQuery(context, weldFace2) != [])
-                opExtrude(context, subId + "extrude2", {
-                            "entities" : weldFace2,
-                            "direction" : face1Dir,
-                            "endBound" : BoundingType.THROUGH_ALL
-                        });
-
-            if (evaluateQuery(context, qUnion([qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)])) != [])
-                opBoolean(context, subId + "booleanCut", {
-                            "tools" : qUnion([qCreatedBy(subId + "extrude1", EntityType.BODY), qCreatedBy(subId + "extrude2", EntityType.BODY)]),
-                            "targets" : qCreatedBy(id + "extrudeOld", EntityType.BODY),
-                            "operationType" : BooleanOperationType.SUBTRACTION
-                        });
-
-            // Extend faces to part again
-            var faceQ1 = qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face1Plane.normal, false);
-            var faceQ2 = qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face2Plane.normal, false);
-            if (evaluateQuery(context, faceQ1) != [])
-                opReplaceFace(context, subId + "replaceFace1", {
-                            "replaceFaces" : faceQ1,
-                            "templateFace" : face1,
-                            "oppositeSense" : true
-                        });
-            if (evaluateQuery(context, faceQ2) != [])
-                opReplaceFace(context, subId + "replaceFace2", {
-                            "replaceFaces" : faceQ2,
-                            "templateFace" : face2,
-                            "oppositeSense" : true
-                        });
-
-            // Endfaces for rounded ends
-            endFaces[] = append(endFaces[], qCapEntity(id + "extrude", CapType.EITHER, EntityType.FACE));
-
-            // More end faces
-            endFaces[] = append(endFaces[], qSubtraction(qCreatedBy(subId + "booleanCut", EntityType.FACE), qUnion([qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face1Plane.normal, false), qParallelPlanes(qCreatedBy(subId + "booleanCut", EntityType.FACE), -face2Plane.normal, false)])));
-        }
-    }
     return qCreatedBy(extrudeId, EntityType.BODY);
 }
 
@@ -880,14 +455,6 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
             ),
         distResult.sides[0].point
     );
-
-    // var weldEdgePoints = evaluateQuery(context, qVertexAdjacent(weldEdge, EntityType.VERTEX));
-
-    // if (weldEdgePoints == [])
-    //     debug(context, evEdgeTangentLine(context, {
-    //                     "edge" : weldEdge,
-    //                     "parameter" : 0
-    //                 }));
 
 
     var intersectionLine = intersection(face1Plane, face2Plane);
@@ -948,8 +515,7 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
 
     var sweepDef = {
         "profiles" : sketchFace,
-        "path" : weldEdge,
-    // "lockFaces" : face1
+        "path" : weldEdge
     };
     try
     {
