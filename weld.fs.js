@@ -146,7 +146,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                         "entities" : qUnion(toDelete[])
                     });
 
-        try
+        if (evaluateQuery(context, qCreatedBy(id, EntityType.BODY)) != [])
         {
             setProperty(context, {
                         "entities" : qCreatedBy(id, EntityType.BODY),
@@ -166,6 +166,8 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                         "value" : definition.excludeFromBom
                     });
         }
+        else
+            throw regenError("Weld failed");
     });
 
 // Fillet functions {
@@ -236,6 +238,8 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                             });
                     weldPart = filletWeldNonPlanarPlanar(context, filletId, filletDef, toDelete, endFaces);
                 }
+                else
+                    reportFeatureInfo(context, id, "Non-Planar to Non-Planar welds are not supported yet.");
                 if (weldPart is Query)
                     welds = append(welds, weldPart);
             }
