@@ -301,12 +301,12 @@ function filletWeldPlanar90(context is Context, id is Id, definition is map, toD
 
     var shape is FilletShape = definition.filletShape;
 
-    var intersection = intersection(face1Plane, face2Plane);
+    var intersectionLine = intersection(face1Plane, face2Plane);
 
-    if (intersection is undefined)
+    if (intersectionLine is undefined)
         return;
 
-    var skPlane = plane(intersection.origin, intersection.direction);
+    var skPlane = plane(intersectionLine.origin, intersectionLine.direction);
     var face1Dir = cross(skPlane.normal, face1Plane.normal);
 
     var face2Dir = -cross(skPlane.normal, face2Plane.normal);
@@ -314,11 +314,11 @@ function filletWeldPlanar90(context is Context, id is Id, definition is map, toD
     var angle = angleBetween(face1Dir, face2Dir);
     var size = definition.filletSize / sin(angle);
 
-    var face1Point = worldToPlane(skPlane, intersection.origin + face1Dir * size);
+    var face1Point = worldToPlane(skPlane, intersectionLine.origin + face1Dir * size);
     var face1SkDir = normalize(face1Point);
     var face1PSkDir = -normalize(worldToPlane(skPlane, skPlane.origin - face2Plane.normal * meter));
 
-    var face2Point = worldToPlane(skPlane, intersection.origin + face2Dir * size);
+    var face2Point = worldToPlane(skPlane, intersectionLine.origin + face2Dir * size);
     var face2SkDir = normalize(face2Point);
     var face2PSkDir = -normalize(worldToPlane(skPlane, skPlane.origin - face1Plane.normal * meter));
     var dist = size * cos(angle / 2); // Distance of a straight line out
@@ -571,12 +571,12 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
 
     var shape is FilletShape = definition.filletShape;
 
-    var intersection = intersection(face1Plane, face2Plane);
+    var intersectionLine = intersection(face1Plane, face2Plane);
 
-    if (intersection is undefined)
+    if (intersectionLine is undefined)
         return;
 
-    var skPlane = plane(intersection.origin, intersection.direction);
+    var skPlane = plane(intersectionLine.origin, intersectionLine.direction);
     var face1Dir = cross(skPlane.normal, face1Plane.normal);
 
     var face2Dir = -cross(skPlane.normal, face2Plane.normal);
@@ -584,10 +584,10 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     var angle = angleBetween(face1Dir, face2Dir);
     var size = definition.filletSize / sin(angle);
 
-    var face1Point = worldToPlane(skPlane, intersection.origin + face1Dir * size);
+    var face1Point = worldToPlane(skPlane, intersectionLine.origin + face1Dir * size);
     var face1SkDir = normalize(face1Point);
 
-    var face2Point = worldToPlane(skPlane, intersection.origin + face2Dir * size);
+    var face2Point = worldToPlane(skPlane, intersectionLine.origin + face2Dir * size);
     var face2SkDir = normalize(face2Point);
     var dist = size * cos(angle / 2); // Distance of a straight line out
 
@@ -869,15 +869,15 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
     //                 }));
 
 
-    var intersection = intersection(face1Plane, face2Plane);
+    var intersectionLine = intersection(face1Plane, face2Plane);
 
-    var skPlane = plane(project(intersection, distResult.sides[0].point), intersection.direction);
+    var skPlane = plane(project(intersectionLine, distResult.sides[0].point), intersectionLine.direction);
     var face1Dir = cross(skPlane.normal, face1Plane.normal);
-    var face1Point = worldToPlane(skPlane, intersection.origin + face1Dir * size);
+    var face1Point = worldToPlane(skPlane, intersectionLine.origin + face1Dir * size);
     var face1SkDir = normalize(face1Point);
 
     var face2Dir = -cross(skPlane.normal, face2Plane.normal);
-    var face2Point = worldToPlane(skPlane, intersection.origin + face2Dir * size);
+    var face2Point = worldToPlane(skPlane, intersectionLine.origin + face2Dir * size);
     var face2SkDir = normalize(face2Point);
 
     var angle = angleBetween(face1Dir, face2Dir);
@@ -1702,11 +1702,11 @@ function doRound(context is Context, id is Id, face1 is Query, face2 is Query) r
     var face2Plane = evPlane(context, {
             "face" : face2
         });
-    var intersection = intersection(face1Plane, face2Plane);
+    var intersectionLine = intersection(face1Plane, face2Plane);
     var angle = angleBetween(face1Plane.normal, -face2Plane.normal);
     try(opRevolve(context, id + "revolve", {
                     "entities" : face2,
-                    "axis" : intersection,
+                    "axis" : intersectionLine,
                     "angleForward" : angle
                 }));
     return qCreatedBy(id + "revolve", EntityType.BODY);
