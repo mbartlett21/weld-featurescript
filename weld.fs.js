@@ -33,16 +33,18 @@ export const DENSITY_BOUNDS = {
         } as RealBoundSpec;
 
 /**
-* Feature and settings options
-* @value WELD_CMD : Weld Feature.
-* @value WELD_CMD : Weld Settings.
-*/
-export enum WeldCmdCfg
+ * Feature and settings options
+ * @value FEATURE : Weld Feature.
+ * @value SETTINGS : Weld Settings.
+ */
+export enum WeldFeatureSettingsSelection
 {
     annotation { "Name" : "Welds" }
-    WELD_CMD,
+    FEATURE,
     annotation { "Name" : "Settings" }
-    WELD_CFG
+    SETTINGS,
+    annotation { "Hidden" : true }
+    SHOW_ALL
 }
 
 /**
@@ -110,11 +112,11 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
     precondition
     {
            annotation { "Name" : "Weld Settings", "UIHint" : ["HORIZONTAL_ENUM", "REMEMBER_PREVIOUS_VALUE"] }
-           definition.weldCmdCfg is WeldCmdCfg;
+           definition.WeldFeatureSettingsSelection is WeldFeatureSettingsSelection;
                         
-           if (definition.weldCmdCfg == WeldCmdCfg.WELD_CMD)
+           if (definition.WeldFeatureSettingsSelection != WeldFeatureSettingsSelection.SETTINGS)
            {
-              annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+           annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
            definition.weldType is WeldType;
 
         if (definition.weldType == WeldType.FILLET_WELD)
@@ -215,7 +217,12 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         }
         else
             throw regenError("Weld failed");
-    });
+    },
+    {
+            weldFeatureSettingsSelection : WeldFeatureSettingsSelection.SHOW_ALL,
+            filletPropagation : false,
+            }
+);
 
 // Fillet functions {
 function filletWeld(context is Context, id is Id, definition is map, toDelete is box)
