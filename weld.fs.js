@@ -314,7 +314,7 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                     "tools" : qUnion(welds),
                     "operationType" : BooleanOperationType.UNION
                 });
-    setWeldNumbers(context, qUnion(welds), "Fillet");
+    setWeldNumbers(context, definition, qUnion(welds));
 }
 
 function filletWeldPlanar(context is Context, id is Id, definition is map, toDelete is box, endFaces is box)
@@ -751,7 +751,7 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
         "startDepth" : min(-face1Box.minCorner[2], -face2Box.minCorner[2]),
     };
     opExtrude(context, id + "extrude2", extrudeDef2);
-    setWeldNumbers(context, qCreatedBy(id + "extrude2", EntityType.BODY), "V-Butt");
+    setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
 }
 
 // This function assumes definition.vButtEdge is of GeometryType.LINE
@@ -1195,7 +1195,7 @@ function doubleVButtWeld(context is Context, id is Id, definition is map, toDele
         "startDepth" : min(-face1Box.minCorner[2], -face2Box.minCorner[2]),
     };
     opExtrude(context, id + "extrude2", extrudeDef2);
-    setWeldNumbers(context, qCreatedBy(id + "extrude2", EntityType.BODY), "Double V-Butt");
+    setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
 }
 
 // V-Butt Weld functions }
@@ -1234,9 +1234,16 @@ function setWeldNumbers(context is Context, weld is Query, weldType is string)
         num = getVariable(context, weldVariableName);
     }
     var welds = evaluateQuery(context, weld);
+	var weltypeStr ="";
     for (var weld in welds)
     {
         num += 1;
+        if (definition.weldType == WeldType.FILLET_WELD)
+            weltypeStr = "Fillet";
+        if (definition.weldType == WeldType.V_BUTT_WELD)
+            weltypeStr = "V-Butt";
+        if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+            weltypeStr = "Double V-Butt";
         setProperty(context, {
                     "entities" : weld,
                     "propertyType" : PropertyType.NAME,
