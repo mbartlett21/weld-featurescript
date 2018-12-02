@@ -385,13 +385,15 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     opExtrude(context, subId + "extrude1", {
                 "entities" : face1,
                 "direction" : face2Dir,
-                "endBound" : BoundingType.THROUGH_ALL
+                "endBound" : BoundingType.BLIND,
+                "endDepth" : size
             });
 
     opExtrude(context, subId + "extrude2", {
                 "entities" : face2,
                 "direction" : face1Dir,
-                "endBound" : BoundingType.THROUGH_ALL
+                "endBound" : BoundingType.BLIND,
+                "endDepth" : size
             });
 
     opBoolean(context, subId + "booleanCut", {
@@ -421,7 +423,7 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
                 qUnion([faceQ1, faceQ2])
             ));
 
-    return qCreatedBy(extrudeId, EntityType.BODY);
+    return qCreatedBy(subId + "booleanCut", EntityType.BODY);
 }
 
 function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is map, toDelete is box, endFaces is box)
@@ -1298,12 +1300,12 @@ function doRound(context is Context, id is Id, face1 is Query, face2 is Query) r
         });
     var intersectionLine = intersection(face1Plane, face2Plane);
     var angle = angleBetween(face1Plane.normal, -face2Plane.normal);
-    try(opRevolve(context, id + "revolve", {
-                    "entities" : face2,
-                    "axis" : intersectionLine,
-                    "angleForward" : angle
+    try(opLoft(context, id + "loft", {
+                    "profileSubqueries" : [face1, face2],
+                    "derivativeInfo" : [{ "profileIndex" : 0, "matchCurvature" : true, "adjacentFaces" : qEdgeAdjacent(face1, EntityType.FACE) },
+                            { "profileIndex" : 1, "matchCurvature" : true, "adjacentFaces" : qEdgeAdjacent(face2, EntityType.FACE) }]
                 }));
-    return qCreatedBy(id + "revolve", EntityType.BODY);
+    return qCreatedBy(id + "loft", EntityType.BODY);
 }
 
 function miterEnds(context is Context, id is Id, endFaces is Query)
