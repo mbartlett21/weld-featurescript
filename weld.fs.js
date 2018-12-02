@@ -328,13 +328,15 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     opExtrude(context, subId + "extrude1", {
                 "entities" : face1,
                 "direction" : face2Dir,
-                "endBound" : BoundingType.THROUGH_ALL
+                "endBound" : BoundingType.BLIND,
+                "endDepth" : size
             });
 
     opExtrude(context, subId + "extrude2", {
                 "entities" : face2,
                 "direction" : face1Dir,
-                "endBound" : BoundingType.THROUGH_ALL
+                "endBound" : BoundingType.BLIND,
+                "endDepth" : size
             });
 
     opBoolean(context, subId + "booleanCut", {
