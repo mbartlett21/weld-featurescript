@@ -364,7 +364,7 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
                 qUnion([faceQ1, faceQ2])
             ));
 
-    return qCreatedBy(extrudeId, EntityType.BODY);
+    return qCreatedBy(subId + "booleanCut", EntityType.BODY);
 }
 
 function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is map, toDelete is box, endFaces is box)
