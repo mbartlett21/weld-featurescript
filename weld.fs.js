@@ -741,6 +741,8 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
                 "operationType" : BooleanOperationType.SUBTRACTION
             });
 
+    extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
+    extrudeDef.startDepth= min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
     // Extrude the second time for the part
     opExtrude(context, id + "extrude2", extrudeDef);
     setWeldNumbers(context, qCreatedBy(id + "extrude2", EntityType.BODY), "V-Butt");
