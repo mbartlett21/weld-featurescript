@@ -1019,12 +1019,12 @@ function doRound(context is Context, id is Id, face1 is Query, face2 is Query) r
         });
     var intersection = intersection(face1Plane, face2Plane);
     var angle = angleBetween(face1Plane.normal, -face2Plane.normal);
-    try(opRevolve(context, id + "revolve", {
-                    "entities" : face2,
-                    "axis" : intersection,
-                    "angleForward" : angle
+    try(opLoft(context, id + "loft", {
+                    "profileSubqueries" : [face1, face2],
+                    "derivativeInfo" : [{ "profileIndex" : 0, "matchCurvature" : true, "adjacentFaces" : qEdgeAdjacent(face1, EntityType.FACE) },
+                            { "profileIndex" : 1, "matchCurvature" : true, "adjacentFaces" : qEdgeAdjacent(face2, EntityType.FACE) }]
                 }));
-    return qCreatedBy(id + "revolve", EntityType.BODY);
+    return qCreatedBy(id + "loft", EntityType.BODY);
 }
 
 function miterEnds(context is Context, id is Id, endFaces is Query)
