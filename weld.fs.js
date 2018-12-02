@@ -1,9 +1,11 @@
 FeatureScript 951;
 
-// This module is distributed under the MIT License.
-// See the LICENSE tab for the license text.
-// Support and maintenance: https://github.com/mbartlett21/weld-featurescript
-// Report issues here: https://github.com/mbartlett21/weld-featurescript/issues
+/**
+ * This module is distributed under the MIT License.
+ * See the LICENSE tab for the license text.
+ * Support and maintenance: https://github.com/mbartlett21/weld-featurescript
+ * Report issues here: https://github.com/mbartlett21/weld-featurescript/issues
+ */
 
 // Imported Enums
 import(path : "onshape/std/booleanoperationtype.gen.fs", version : "951.0");
@@ -111,67 +113,67 @@ annotation { "Feature Type Name" : "Weld" }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
-           annotation { "Name" : "Weld Settings", "UIHint" : ["HORIZONTAL_ENUM", "REMEMBER_PREVIOUS_VALUE"] }
-           definition.WeldFeatureSettingsSelection is WeldFeatureSettingsSelection;
-                        
-           if (definition.WeldFeatureSettingsSelection != WeldFeatureSettingsSelection.SETTINGS)
-           {
-           annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-           definition.weldType is WeldType;
+        annotation { "Name" : "Weld Settings", "UIHint" : ["HORIZONTAL_ENUM", "REMEMBER_PREVIOUS_VALUE"] }
+        definition.WeldFeatureSettingsSelection is WeldFeatureSettingsSelection;
 
-        if (definition.weldType == WeldType.FILLET_WELD)
+        if (definition.WeldFeatureSettingsSelection != WeldFeatureSettingsSelection.SETTINGS)
         {
-            annotation { "Name" : "Side 1", "Filter" : EntityType.FACE }
-            definition.filletEntities1 is Query;
+            annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+            definition.weldType is WeldType;
 
-            annotation { "Name" : "Side 2", "Filter" : EntityType.FACE }
-            definition.filletEntities2 is Query;
-
-            annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-            definition.filletShape is FilletShape;
-
-            annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-            isLength(definition.filletSize, BLEND_BOUNDS);
-
-            annotation { "Name" : "Tangent propagation" }
-            definition.filletPropagation is boolean;
-
-            annotation { "Name" : "Corner style", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-            definition.filletCornerShape is FilletCornerShape;
-        }
-
-        else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
-        {
-            annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE, "MaxNumberOfPicks" : 1 }
-            definition.vButtEdge is Query;
-
-            annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-            definition.vButtShape is VButtShape;
-
-            annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-            isAngle(definition.vButtAngle, ANGLE_STRICT_180_BOUNDS);
-
-            annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
-            definition.vButtRootGap is boolean;
-
-            if (definition.vButtRootGap)
+            if (definition.weldType == WeldType.FILLET_WELD)
             {
-                annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                isLength(definition.vButtRootGapWidth, SHELL_OFFSET_BOUNDS);
+                annotation { "Name" : "Side 1", "Filter" : EntityType.FACE }
+                definition.filletEntities1 is Query;
 
-                annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                isLength(definition.vButtRootGapHeight, SHELL_OFFSET_BOUNDS);
+                annotation { "Name" : "Side 2", "Filter" : EntityType.FACE }
+                definition.filletEntities2 is Query;
+
+                annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                definition.filletShape is FilletShape;
+
+                annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                isLength(definition.filletSize, BLEND_BOUNDS);
+
+                annotation { "Name" : "Tangent propagation" }
+                definition.filletPropagation is boolean;
+
+                annotation { "Name" : "Corner style", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                definition.filletCornerShape is FilletCornerShape;
+            }
+
+            else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+            {
+                annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE, "MaxNumberOfPicks" : 1 }
+                definition.vButtEdge is Query;
+
+                annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                definition.vButtShape is VButtShape;
+
+                annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                isAngle(definition.vButtAngle, ANGLE_STRICT_180_BOUNDS);
+
+                annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+                definition.vButtRootGap is boolean;
+
+                if (definition.vButtRootGap)
+                {
+                    annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.vButtRootGapWidth, SHELL_OFFSET_BOUNDS);
+
+                    annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.vButtRootGapHeight, SHELL_OFFSET_BOUNDS);
+                }
             }
         }
-           }                     
-           else
-           {
-                    annotation { "Name" : "Density (g/cm^3)", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isReal(definition.density, DENSITY_BOUNDS);
+        else
+        {
+            annotation { "Name" : "Density (g/cm^3)", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+            isReal(definition.density, DENSITY_BOUNDS);
 
-                    annotation { "Name" : "Exclude from BOM", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
-                    definition.excludeFromBom is boolean;
-           }
+            annotation { "Name" : "Exclude from BOM", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+            definition.excludeFromBom is boolean;
+        }
     }
     {
         var toDelete = new box([]);
@@ -218,11 +220,11 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         else
             throw regenError("Weld failed");
     },
-    {
+        {
             weldFeatureSettingsSelection : WeldFeatureSettingsSelection.SHOW_ALL,
             filletPropagation : false,
-            }
-);
+        }
+    );
 
 // Fillet functions {
 function filletWeld(context is Context, id is Id, definition is map, toDelete is box)
@@ -314,7 +316,7 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                     "tools" : qUnion(welds),
                     "operationType" : BooleanOperationType.UNION
                 });
-    setWeldNumbers(context, qUnion(welds), "Fillet");
+    setWeldNumbers(context, definition, qUnion(welds));
 }
 
 function filletWeldPlanar(context is Context, id is Id, definition is map, toDelete is box, endFaces is box)
@@ -745,7 +747,7 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
     extrudeDef.startDepth= min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
     // Extrude the second time for the part
     opExtrude(context, id + "extrude2", extrudeDef);
-    setWeldNumbers(context, qCreatedBy(id + "extrude2", EntityType.BODY), "V-Butt");
+    setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
 }
 
 // This function assumes definition.vButtEdge is of GeometryType.LINE
@@ -957,239 +959,11 @@ function doubleVButtWeld(context is Context, id is Id, definition is map, toDele
                 "operationType" : BooleanOperationType.SUBTRACTION
             });
 
+    extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
+    extrudeDef.startDepth= min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
     // Extrude the second time for the part
-    var extrudeDef2 = {
-        "entities" : qCreatedBy(id + "profileSketch", EntityType.FACE),
-        "direction" : skPlane.normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : min(face1Box.maxCorner[2], face2Box.maxCorner[2]),
-        "startBound" : BoundingType.BLIND,
-        "startDepth" : min(-face1Box.minCorner[2], -face2Box.minCorner[2]),
-    };
-    opExtrude(context, id + "extrude2", extrudeDef2);
-    setWeldNumbers(context, qCreatedBy(id + "extrude2", EntityType.BODY), "V-Butt");
-}
-
-// This function assumes definition.vButtEdge is of GeometryType.LINE
-function doubleVButtWeld(context is Context, id is Id, definition is map, toDelete is box)
-{
-
-    verifyNonemptyQuery(context, definition, "vButtEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
-    var edge1 = definition.vButtEdge;
-
-    var shape = definition.vButtShape;
-
-    var angle = definition.vButtAngle;
-    var rootGap = definition.vButtRootGap;
-    var rootGapWidth = definition.vButtRootGapWidth;
-    var rootGapHeight = definition.vButtRootGapHeight;
-
-    // Parts
-    var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];
-    if (evaluateQuery(context, qSubtraction(qBodyType(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), BodyType.SOLID), part1)) == [])
-        throw regenError("There must be two parts in the part studio");
-
-    var partsDistResult = evDistance(context, {
-            "side0" : edge1,
-            "side1" : qSubtraction(qBodyType(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), BodyType.SOLID), part1)
-        });
-    var part2 = try(evaluateQuery(
-                context,
-                qNthElement(
-                    qSubtraction(qBodyType(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), BodyType.SOLID), part1),
-                    partsDistResult.sides[1].index
-                )
-            )[0]);
-
-    // Edge 2
-    var edge2 = try(evaluateQuery(
-                context,
-                qClosestTo(
-                    parallelEdges(context, qOwnedByBody(part2, EntityType.EDGE), edge1),
-                    evEdgeTangentLine(context, { "edge" : edge1, "parameter" : 0.5 }).origin
-                )
-            )[0]);
-
-
-
-    // Find closest faces
-    var faces1 = evaluateQuery(context, qEdgeAdjacent(edge1, EntityType.FACE));
-    var faces2 = evaluateQuery(context, qEdgeAdjacent(edge2, EntityType.FACE));
-    var minDistSqValue = 500 * 500;
-    var face1;
-    var face2;
-    for (var testFace1 in faces1)
-    {
-        var testFaceC1 = evApproximateCentroid(context, {
-                "entities" : testFace1
-            });
-        for (var testFace2 in faces2)
-        {
-            var testFaceC2 = evApproximateCentroid(context, {
-                    "entities" : testFace2
-                });
-            var distSqVal = squaredNorm(testFaceC1 - testFaceC2).value;
-            if (distSqVal < minDistSqValue)
-            {
-                face1 = testFace1;
-                face2 = testFace2;
-                minDistSqValue = distSqVal;
-            }
-        }
-    }
-
-    // EdgeLines
-    var edge1Line = evEdgeTangentLine(context, {
-            "edge" : edge1,
-            "face" : face1,
-            "parameter" : 0.5
-        });
-    var edge2Line = evEdgeTangentLine(context, {
-            "edge" : edge2,
-            "face" : face2,
-            "parameter" : 0.5
-        });
-    if (!parallelVectors(edge1Line.direction, edge2Line.direction))
-        throw regenError("Edges must be parallel", qUnion([edge1, edge2]));
-
-    // Thickness
-    var thicknessEdge = evaluateQuery(context, qIntersection([qVertexAdjacent(edge1, EntityType.EDGE), qEdgeAdjacent(face1, EntityType.EDGE)]))[0];
-    var thickness = evLength(context, {
-            "entities" : thicknessEdge
-        });
-
-    // Sketch x axis
-    var xAxis = extractDirection(context, face1);
-
-    // Extend faces and remove weld gap
-    var distanceToExtend = partsDistResult.distance / 2;
-    opOffsetFace(context, id + "offsetFaces", {
-                "moveFaces" : qUnion([face1, face2]),
-                "offsetDistance" : distanceToExtend
-            });
-
-    // Sketch
-    var skPlane = plane(edge1Line.origin, edge1Line.direction, xAxis);
-    skPlane.origin = project(skPlane, (edge1Line.origin + edge2Line.origin) / 2);
-
-    var profileSketch = newSketchOnPlane(context, id + "profileSketch", {
-            "sketchPlane" : skPlane
-        });
-    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) / 2 + rootGapWidth / 2 : tan(angle / 2) * thickness / 2;
-    if (shape == VButtShape.FLAT)
-    {
-        skLineSegment(profileSketch, "topLine", {
-                    "start" : vector(-distOut, 0 * meter),
-                    "end" : vector(distOut, 0 * meter)
-                });
-        skLineSegment(profileSketch, "bottomLine", {
-                    "start" : vector(-distOut, -thickness),
-                    "end" : vector(distOut, -thickness)
-                });
-    }
-    else
-    {
-        skArc(profileSketch, "topLine", {
-                    "start" : vector(-distOut, 0 * meter),
-                    "mid" : vector(0 * meter, distOut / 5),
-                    "end" : vector(distOut, 0 * meter)
-                });
-        skArc(profileSketch, "bottomLine", {
-                    "start" : vector(-distOut, -thickness),
-                    "mid" : vector(0 * meter, -thickness - distOut / 5),
-                    "end" : vector(distOut, -thickness)
-                });
-    }
-    if (rootGap)
-    {
-        skLineSegment(profileSketch, "sideLineVertical1", {
-                    "start" : vector(-rootGapWidth / 2, -thickness / 2 - rootGapHeight / 2),
-                    "end" : vector(-rootGapWidth / 2, -thickness / 2 + rootGapHeight / 2)
-                });
-        skLineSegment(profileSketch, "sideLineVertical2", {
-                    "start" : vector(rootGapWidth / 2, -thickness / 2 - rootGapHeight / 2),
-                    "end" : vector(rootGapWidth / 2, -thickness / 2 + rootGapHeight / 2)
-                });
-        skLineSegment(profileSketch, "sideTopLine1", {
-                    "start" : vector(-distOut, 0 * meter),
-                    "end" : vector(-rootGapWidth / 2, -thickness / 2 + rootGapHeight / 2)
-                });
-        skLineSegment(profileSketch, "sideTopLine2", {
-                    "start" : vector(distOut, 0 * meter),
-                    "end" : vector(rootGapWidth / 2, -thickness / 2 + rootGapHeight / 2)
-                });
-        skLineSegment(profileSketch, "sideBottomLine1", {
-                    "start" : vector(-distOut, -thickness),
-                    "end" : vector(-rootGapWidth / 2, -thickness / 2 - rootGapHeight / 2)
-                });
-        skLineSegment(profileSketch, "sideBottomLine2", {
-                    "start" : vector(distOut, -thickness),
-                    "end" : vector(rootGapWidth / 2, -thickness / 2 - rootGapHeight / 2)
-                });
-    }
-    else
-    {
-        skLineSegment(profileSketch, "sideTopLine1", {
-                    "start" : vector(-distOut, 0 * meter),
-                    "end" : vector(0 * meter, -thickness / 2)
-                });
-        skLineSegment(profileSketch, "sideTopLine2", {
-                    "start" : vector(distOut, 0 * meter),
-                    "end" : vector(0 * meter, -thickness / 2)
-                });
-        skLineSegment(profileSketch, "sideBottomLine1", {
-                    "start" : vector(-distOut, -thickness),
-                    "end" : vector(0 * meter, -thickness / 2)
-                });
-        skLineSegment(profileSketch, "sideBottomLine2", {
-                    "start" : vector(distOut, -thickness),
-                    "end" : vector(0 * meter, -thickness / 2)
-                });
-    }
-    skSolve(profileSketch);
-
-    toDelete[] = append(toDelete[], qCreatedBy(id + "profileSketch"));
-
-    // Finding extrude amounts
-    var skCSys = planeToCSys(skPlane);
-    var face1Box = evBox3d(context, {
-            "topology" : face1,
-            "tight" : true,
-            "cSys" : skCSys
-        });
-    var face2Box = evBox3d(context, {
-            "topology" : face2,
-            "tight" : true,
-            "cSys" : skCSys
-        });
-    var extrudeDef = {
-        "entities" : qCreatedBy(id + "profileSketch", EntityType.FACE),
-        "direction" : skPlane.normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : max(face1Box.maxCorner[2], face2Box.maxCorner[2]),
-        "startBound" : BoundingType.BLIND,
-        "startDepth" : max(-face1Box.minCorner[2], -face2Box.minCorner[2]),
-    };
-
-    // Extrude the first time to boolean
-    opExtrude(context, id + "extrude", extrudeDef);
-    opBoolean(context, id + "boolean", {
-                "tools" : qCreatedBy(id + "extrude", EntityType.BODY),
-                "targets" : qUnion([part1, part2]),
-                "operationType" : BooleanOperationType.SUBTRACTION
-            });
-
-    // Extrude the second time for the part
-    var extrudeDef2 = {
-        "entities" : qCreatedBy(id + "profileSketch", EntityType.FACE),
-        "direction" : skPlane.normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : min(face1Box.maxCorner[2], face2Box.maxCorner[2]),
-        "startBound" : BoundingType.BLIND,
-        "startDepth" : min(-face1Box.minCorner[2], -face2Box.minCorner[2]),
-    };
-    opExtrude(context, id + "extrude2", extrudeDef2);
-    setWeldNumbers(context, qCreatedBy(id + "extrude2", EntityType.BODY), "Double V-Butt");
+    opExtrude(context, id + "extrude2", extrudeDef);
+    setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
 }
 
 // V-Butt Weld functions }
@@ -1220,7 +994,7 @@ function color(v is number)
 
 const weldVariableName = "weldNumberCounter";
 
-function setWeldNumbers(context is Context, weld is Query, weldType is string)
+function setWeldNumbers(context is Context, definition is map, weld is Query)
 {
     var num = 0;
     try silent
@@ -1228,13 +1002,20 @@ function setWeldNumbers(context is Context, weld is Query, weldType is string)
         num = getVariable(context, weldVariableName);
     }
     var welds = evaluateQuery(context, weld);
+    var weldTypeStr = "";
     for (var weld in welds)
     {
         num += 1;
+        if (definition.weldType == WeldType.FILLET_WELD)
+            weldTypeStr = "Fillet";
+        else if (definition.weldType == WeldType.V_BUTT_WELD)
+            weldTypeStr = "V-Butt";
+        else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+            weldTypeStr = "Double V-Butt";
         setProperty(context, {
                     "entities" : weld,
                     "propertyType" : PropertyType.NAME,
-                    "value" : "Weld " ~ num ~ " (" ~ weldType ~ ")"
+                    "value" : "Weld " ~ num ~ " (" ~ weldTypeStr ~ ")"
                 });
     }
     setVariable(context, weldVariableName, num);
@@ -1286,14 +1067,6 @@ function roundEnds(context is Context, id is Id, endFaces is Query) returns Quer
 
 function doRound(context is Context, id is Id, face1 is Query, face2 is Query) returns Query
 {
-    var face1Plane = evPlane(context, {
-            "face" : face1
-        });
-    var face2Plane = evPlane(context, {
-            "face" : face2
-        });
-    var intersectionLine = intersection(face1Plane, face2Plane);
-    var angle = angleBetween(face1Plane.normal, -face2Plane.normal);
     try(opLoft(context, id + "loft", {
                     "profileSubqueries" : [face1, face2],
                     "derivativeInfo" : [{ "profileIndex" : 0, "matchCurvature" : true, "adjacentFaces" : qEdgeAdjacent(face1, EntityType.FACE) },
