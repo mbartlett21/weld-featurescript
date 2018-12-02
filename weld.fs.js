@@ -111,67 +111,67 @@ annotation { "Feature Type Name" : "Weld" }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
-           annotation { "Name" : "Weld Settings", "UIHint" : ["HORIZONTAL_ENUM", "REMEMBER_PREVIOUS_VALUE"] }
-           definition.WeldFeatureSettingsSelection is WeldFeatureSettingsSelection;
-                        
-           if (definition.WeldFeatureSettingsSelection != WeldFeatureSettingsSelection.SETTINGS)
-           {
-           annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-           definition.weldType is WeldType;
+        annotation { "Name" : "Weld Settings", "UIHint" : ["HORIZONTAL_ENUM", "REMEMBER_PREVIOUS_VALUE"] }
+        definition.WeldFeatureSettingsSelection is WeldFeatureSettingsSelection;
 
-        if (definition.weldType == WeldType.FILLET_WELD)
+        if (definition.WeldFeatureSettingsSelection != WeldFeatureSettingsSelection.SETTINGS)
         {
-            annotation { "Name" : "Side 1", "Filter" : EntityType.FACE }
-            definition.filletEntities1 is Query;
+            annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+            definition.weldType is WeldType;
 
-            annotation { "Name" : "Side 2", "Filter" : EntityType.FACE }
-            definition.filletEntities2 is Query;
-
-            annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-            definition.filletShape is FilletShape;
-
-            annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-            isLength(definition.filletSize, BLEND_BOUNDS);
-
-            annotation { "Name" : "Tangent propagation" }
-            definition.filletPropagation is boolean;
-
-            annotation { "Name" : "Corner style", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-            definition.filletCornerShape is FilletCornerShape;
-        }
-
-        else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
-        {
-            annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE, "MaxNumberOfPicks" : 1 }
-            definition.vButtEdge is Query;
-
-            annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-            definition.vButtShape is VButtShape;
-
-            annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-            isAngle(definition.vButtAngle, ANGLE_STRICT_180_BOUNDS);
-
-            annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
-            definition.vButtRootGap is boolean;
-
-            if (definition.vButtRootGap)
+            if (definition.weldType == WeldType.FILLET_WELD)
             {
-                annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                isLength(definition.vButtRootGapWidth, SHELL_OFFSET_BOUNDS);
+                annotation { "Name" : "Side 1", "Filter" : EntityType.FACE }
+                definition.filletEntities1 is Query;
 
-                annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                isLength(definition.vButtRootGapHeight, SHELL_OFFSET_BOUNDS);
+                annotation { "Name" : "Side 2", "Filter" : EntityType.FACE }
+                definition.filletEntities2 is Query;
+
+                annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                definition.filletShape is FilletShape;
+
+                annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                isLength(definition.filletSize, BLEND_BOUNDS);
+
+                annotation { "Name" : "Tangent propagation" }
+                definition.filletPropagation is boolean;
+
+                annotation { "Name" : "Corner style", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                definition.filletCornerShape is FilletCornerShape;
+            }
+
+            else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+            {
+                annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE, "MaxNumberOfPicks" : 1 }
+                definition.vButtEdge is Query;
+
+                annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                definition.vButtShape is VButtShape;
+
+                annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                isAngle(definition.vButtAngle, ANGLE_STRICT_180_BOUNDS);
+
+                annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+                definition.vButtRootGap is boolean;
+
+                if (definition.vButtRootGap)
+                {
+                    annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.vButtRootGapWidth, SHELL_OFFSET_BOUNDS);
+
+                    annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.vButtRootGapHeight, SHELL_OFFSET_BOUNDS);
+                }
             }
         }
-           }                     
-           else
-           {
-                    annotation { "Name" : "Density (g/cm^3)", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isReal(definition.density, DENSITY_BOUNDS);
+        else
+        {
+            annotation { "Name" : "Density (g/cm^3)", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+            isReal(definition.density, DENSITY_BOUNDS);
 
-                    annotation { "Name" : "Exclude from BOM", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
-                    definition.excludeFromBom is boolean;
-           }
+            annotation { "Name" : "Exclude from BOM", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+            definition.excludeFromBom is boolean;
+        }
     }
     {
         var toDelete = new box([]);
@@ -218,11 +218,11 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         else
             throw regenError("Weld failed");
     },
-    {
+        {
             weldFeatureSettingsSelection : WeldFeatureSettingsSelection.SHOW_ALL,
             filletPropagation : false,
-            }
-);
+        }
+    );
 
 // Fillet functions {
 function filletWeld(context is Context, id is Id, definition is map, toDelete is box)
