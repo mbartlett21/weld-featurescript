@@ -742,15 +742,7 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
             });
 
     // Extrude the second time for the part
-    var extrudeDef2 = {
-        "entities" : qCreatedBy(id + "profileSketch", EntityType.FACE),
-        "direction" : skPlane.normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : min(face1Box.maxCorner[2], face2Box.maxCorner[2]),
-        "startBound" : BoundingType.BLIND,
-        "startDepth" : min(-face1Box.minCorner[2], -face2Box.minCorner[2]),
-    };
-    opExtrude(context, id + "extrude2", extrudeDef2);
+    opExtrude(context, id + "extrude2", extrudeDef);
     setWeldNumbers(context, qCreatedBy(id + "extrude2", EntityType.BODY), "V-Butt");
 }
 
