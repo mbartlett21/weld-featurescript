@@ -673,7 +673,7 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
     else
         skArc(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
-                    "mid" : vector(0 * meter, distOut / 5),
+                    "mid" : vector(0 * meter, sqrt(distOut*distOut + thickness*thickness) - thickness),
                     "end" : vector(distOut, 0 * meter)
                 });
     if (rootGap)
