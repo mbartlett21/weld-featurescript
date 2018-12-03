@@ -54,6 +54,9 @@ export enum WeldFeatureSettingsSelection
  * @value FILLET_WELD : Fillet weld.
  * @value V_BUTT_WELD : V-Butt weld (beta).
  * @value DOUBLE_V_BUTT_WELD : Double V-Butt weld (beta).
+ * @value SQUARE_BUTT_WELD : Square Butt weld (ToDo).
+ * @value U_BUTT_WELD : U-Butt weld (ToDo).
+ * @value J_BUTT_WELD : J-Butt weld (ToDo).
  */
 export enum WeldType
 {
@@ -62,7 +65,13 @@ export enum WeldType
     annotation { "Name" : "V-Butt weld (beta)" }
     V_BUTT_WELD,
     annotation { "Name" : "Double V-Butt weld (beta)" }
-    DOUBLE_V_BUTT_WELD
+    DOUBLE_V_BUTT_WELD,
+    annotation { "Name" : "Square Butt weld (ToDo)" }
+    SQUARE_BUTT_WELD,
+    annotation { "Name" : "U-Butt weld (ToDo)" }
+    U_BUTT_WELD,
+    annotation { "Name" : "J-Butt weld (ToDo)" }
+    J_BUTT_WELD
 }
 
 /**
@@ -95,11 +104,11 @@ export enum FilletCornerShape
 }
 
 /**
- * Specifies the shape of VButt.
+ * Specifies the shape of Butt.
  * @value CONVEX : Convex.
  * @value FLAT : Flat.
  */
-export enum VButtShape
+export enum ButtShape
 {
     annotation { "Name" : "Convex" }
     CONVEX,
@@ -141,28 +150,42 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 annotation { "Name" : "Corner style", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
                 definition.filletCornerShape is FilletCornerShape;
             }
-
-            else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+            else
             {
                 annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE, "MaxNumberOfPicks" : 1 }
-                definition.vButtEdge is Query;
+                definition.buttEdge is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-                definition.vButtShape is VButtShape;
+                definition.buttShape is ButtShape;
 
-                annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                isAngle(definition.vButtAngle, ANGLE_STRICT_180_BOUNDS);
+                if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+                {
+                    annotation { "Name" : "Distance", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.buttDist, BLEND_BOUNDS);
+                }
+
+                if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+                {
+                    annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isAngle(definition.buttAngle, ANGLE_STRICT_180_BOUNDS);
+                }
+
+                if (definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
+                {
+                    annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.buttRadius, BLEND_BOUNDS);
+                }
 
                 annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
-                definition.vButtRootGap is boolean;
+                definition.buttRootGap is boolean;
 
-                if (definition.vButtRootGap)
+                if (definition.buttRootGap)
                 {
                     annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isLength(definition.vButtRootGapWidth, SHELL_OFFSET_BOUNDS);
+                    isLength(definition.buttRootGapWidth, SHELL_OFFSET_BOUNDS);
 
                     annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isLength(definition.vButtRootGapHeight, SHELL_OFFSET_BOUNDS);
+                    isLength(definition.buttRootGapHeight, SHELL_OFFSET_BOUNDS);
                 }
             }
         }
@@ -181,13 +204,9 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         {
             filletWeld(context, id, definition, toDelete);
         }
-        else if (definition.weldType == WeldType.V_BUTT_WELD)
+        else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD || definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
         {
-            vButtWeld(context, id, definition, toDelete);
-        }
-        else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
-        {
-            doubleVButtWeld(context, id, definition, toDelete);
+            buttWeld(context, id, definition, toDelete);
         }
         else
             throw regenError("Weld type not supported", ["weldType"]);
@@ -559,21 +578,13 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
 
 // Fillet functions }
 
-// V-Butt Weld functions {
+// Butt Weld functions {
 
-// This function assumes definition.vButtEdge is of GeometryType.LINE
-function vButtWeld(context is Context, id is Id, definition is map, toDelete is box)
+// This function assumes definition.buttEdge is of GeometryType.LINE
+function buttWeld(context is Context, id is Id, definition is map, toDelete is box)
 {
-
-    verifyNonemptyQuery(context, definition, "vButtEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
-    var edge1 = definition.vButtEdge;
-
-    var shape = definition.vButtShape;
-
-    var angle = definition.vButtAngle;
-    var rootGap = definition.vButtRootGap;
-    var rootGapWidth = definition.vButtRootGapWidth;
-    var rootGapHeight = definition.vButtRootGapHeight;
+    verifyNonemptyQuery(context, definition, "buttEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
+    var edge1 = definition.buttEdge;
 
     // Parts
     var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];
@@ -664,8 +675,73 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
     var profileSketch = newSketchOnPlane(context, id + "profileSketch", {
             "sketchPlane" : skPlane
         });
+
+    // Create each weldtype sketch
+    if (definition.weldType == WeldType.V_BUTT_WELD)
+        sketchVButtWeld(context, definition, thickness, profileSketch);
+    else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+        sketchDoubleVButtWeld(context, definition, thickness, profileSketch);
+    else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+        sketchSquareButtWeld(context, definition, thickness, profileSketch);
+    else if (definition.weldType == WeldType.U_BUTT_WELD)
+        sketchUButtWeld(context, definition, thickness, profileSketch);
+    else if (definition.weldType == WeldType.J_BUTT_WELD)
+        sketchJButtWeld(context, definition, thickness, profileSketch);
+
+    skSolve(profileSketch);
+
+    toDelete[] = append(toDelete[], qCreatedBy(id + "profileSketch"));
+
+    // Finding extrude amounts
+    var skCSys = planeToCSys(skPlane);
+    var face1Box = evBox3d(context, {
+            "topology" : face1,
+            "tight" : true,
+            "cSys" : skCSys
+        });
+    var face2Box = evBox3d(context, {
+            "topology" : face2,
+            "tight" : true,
+            "cSys" : skCSys
+        });
+    var extrudeDef = {
+        "entities" : qCreatedBy(id + "profileSketch", EntityType.FACE),
+        "direction" : skPlane.normal,
+        "endBound" : BoundingType.BLIND,
+        "endDepth" : max(face1Box.maxCorner[2], face2Box.maxCorner[2]),
+        "startBound" : BoundingType.BLIND,
+        "startDepth" : max(-face1Box.minCorner[2], -face2Box.minCorner[2]),
+    };
+
+    // Extrude the first time to boolean
+    opExtrude(context, id + "extrude", extrudeDef);
+    opBoolean(context, id + "boolean", {
+                "tools" : qCreatedBy(id + "extrude", EntityType.BODY),
+                "targets" : qUnion([part1, part2]),
+                "operationType" : BooleanOperationType.SUBTRACTION
+            });
+
+    extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
+    extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
+    // Extrude the second time for the part
+    opExtrude(context, id + "extrude2", extrudeDef);
+    setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
+}
+
+// /**
+//  *  V-Butt Weld Sketch
+//  */
+function sketchVButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+{
+    var shape = definition.buttShape;
+    var angle = definition.buttAngle;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
+
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
-    if (shape == VButtShape.FLAT)
+
+    if (shape == ButtShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
@@ -710,153 +786,22 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
                     "end" : vector(0 * meter, -thickness)
                 });
     }
-    skSolve(profileSketch);
-
-    toDelete[] = append(toDelete[], qCreatedBy(id + "profileSketch"));
-
-    // Finding extrude amounts
-    var skCSys = planeToCSys(skPlane);
-    var face1Box = evBox3d(context, {
-            "topology" : face1,
-            "tight" : true,
-            "cSys" : skCSys
-        });
-    var face2Box = evBox3d(context, {
-            "topology" : face2,
-            "tight" : true,
-            "cSys" : skCSys
-        });
-    var extrudeDef = {
-        "entities" : qCreatedBy(id + "profileSketch", EntityType.FACE),
-        "direction" : skPlane.normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : max(face1Box.maxCorner[2], face2Box.maxCorner[2]),
-        "startBound" : BoundingType.BLIND,
-        "startDepth" : max(-face1Box.minCorner[2], -face2Box.minCorner[2]),
-    };
-
-    // Extrude the first time to boolean
-    opExtrude(context, id + "extrude", extrudeDef);
-    opBoolean(context, id + "boolean", {
-                "tools" : qCreatedBy(id + "extrude", EntityType.BODY),
-                "targets" : qUnion([part1, part2]),
-                "operationType" : BooleanOperationType.SUBTRACTION
-            });
-
-    extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
-    extrudeDef.startDepth= min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
-    // Extrude the second time for the part
-    opExtrude(context, id + "extrude2", extrudeDef);
-    setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
 }
 
-// This function assumes definition.vButtEdge is of GeometryType.LINE
-function doubleVButtWeld(context is Context, id is Id, definition is map, toDelete is box)
+// /**
+//  * Double V-Butt Weld Sketch
+//  */
+function sketchDoubleVButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
 {
+    var shape = definition.buttShape;
+    var angle = definition.buttAngle;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
 
-    verifyNonemptyQuery(context, definition, "vButtEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
-    var edge1 = definition.vButtEdge;
-
-    var shape = definition.vButtShape;
-
-    var angle = definition.vButtAngle;
-    var rootGap = definition.vButtRootGap;
-    var rootGapWidth = definition.vButtRootGapWidth;
-    var rootGapHeight = definition.vButtRootGapHeight;
-
-    // Parts
-    var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];
-    if (evaluateQuery(context, qSubtraction(qBodyType(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), BodyType.SOLID), part1)) == [])
-        throw regenError("There must be two parts in the part studio");
-
-    var partsDistResult = evDistance(context, {
-            "side0" : edge1,
-            "side1" : qSubtraction(qBodyType(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), BodyType.SOLID), part1)
-        });
-    var part2 = try(evaluateQuery(
-                context,
-                qNthElement(
-                    qSubtraction(qBodyType(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), BodyType.SOLID), part1),
-                    partsDistResult.sides[1].index
-                )
-            )[0]);
-
-    // Edge 2
-    var edge2 = try(evaluateQuery(
-                context,
-                qClosestTo(
-                    parallelEdges(context, qOwnedByBody(part2, EntityType.EDGE), edge1),
-                    evEdgeTangentLine(context, { "edge" : edge1, "parameter" : 0.5 }).origin
-                )
-            )[0]);
-
-
-
-    // Find closest faces
-    var faces1 = evaluateQuery(context, qEdgeAdjacent(edge1, EntityType.FACE));
-    var faces2 = evaluateQuery(context, qEdgeAdjacent(edge2, EntityType.FACE));
-    var minDistSqValue = 500 * 500;
-    var face1;
-    var face2;
-    for (var testFace1 in faces1)
-    {
-        var testFaceC1 = evApproximateCentroid(context, {
-                "entities" : testFace1
-            });
-        for (var testFace2 in faces2)
-        {
-            var testFaceC2 = evApproximateCentroid(context, {
-                    "entities" : testFace2
-                });
-            var distSqVal = squaredNorm(testFaceC1 - testFaceC2).value;
-            if (distSqVal < minDistSqValue)
-            {
-                face1 = testFace1;
-                face2 = testFace2;
-                minDistSqValue = distSqVal;
-            }
-        }
-    }
-
-    // EdgeLines
-    var edge1Line = evEdgeTangentLine(context, {
-            "edge" : edge1,
-            "face" : face1,
-            "parameter" : 0.5
-        });
-    var edge2Line = evEdgeTangentLine(context, {
-            "edge" : edge2,
-            "face" : face2,
-            "parameter" : 0.5
-        });
-    if (!parallelVectors(edge1Line.direction, edge2Line.direction))
-        throw regenError("Edges must be parallel", qUnion([edge1, edge2]));
-
-    // Thickness
-    var thicknessEdge = evaluateQuery(context, qIntersection([qVertexAdjacent(edge1, EntityType.EDGE), qEdgeAdjacent(face1, EntityType.EDGE)]))[0];
-    var thickness = evLength(context, {
-            "entities" : thicknessEdge
-        });
-
-    // Sketch x axis
-    var xAxis = extractDirection(context, face1);
-
-    // Extend faces and remove weld gap
-    var distanceToExtend = partsDistResult.distance / 2;
-    opOffsetFace(context, id + "offsetFaces", {
-                "moveFaces" : qUnion([face1, face2]),
-                "offsetDistance" : distanceToExtend
-            });
-
-    // Sketch
-    var skPlane = plane(edge1Line.origin, edge1Line.direction, xAxis);
-    skPlane.origin = project(skPlane, (edge1Line.origin + edge2Line.origin) / 2);
-
-    var profileSketch = newSketchOnPlane(context, id + "profileSketch", {
-            "sketchPlane" : skPlane
-        });
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) / 2 + rootGapWidth / 2 : tan(angle / 2) * thickness / 2;
-    if (shape == VButtShape.FLAT)
+
+    if (shape == ButtShape.FLAT)
     {
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
@@ -926,47 +871,207 @@ function doubleVButtWeld(context is Context, id is Id, definition is map, toDele
                     "end" : vector(0 * meter, -thickness / 2)
                 });
     }
-    skSolve(profileSketch);
-
-    toDelete[] = append(toDelete[], qCreatedBy(id + "profileSketch"));
-
-    // Finding extrude amounts
-    var skCSys = planeToCSys(skPlane);
-    var face1Box = evBox3d(context, {
-            "topology" : face1,
-            "tight" : true,
-            "cSys" : skCSys
-        });
-    var face2Box = evBox3d(context, {
-            "topology" : face2,
-            "tight" : true,
-            "cSys" : skCSys
-        });
-    var extrudeDef = {
-        "entities" : qCreatedBy(id + "profileSketch", EntityType.FACE),
-        "direction" : skPlane.normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : max(face1Box.maxCorner[2], face2Box.maxCorner[2]),
-        "startBound" : BoundingType.BLIND,
-        "startDepth" : max(-face1Box.minCorner[2], -face2Box.minCorner[2]),
-    };
-
-    // Extrude the first time to boolean
-    opExtrude(context, id + "extrude", extrudeDef);
-    opBoolean(context, id + "boolean", {
-                "tools" : qCreatedBy(id + "extrude", EntityType.BODY),
-                "targets" : qUnion([part1, part2]),
-                "operationType" : BooleanOperationType.SUBTRACTION
-            });
-
-    extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
-    extrudeDef.startDepth= min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
-    // Extrude the second time for the part
-    opExtrude(context, id + "extrude2", extrudeDef);
-    setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
 }
 
-// V-Butt Weld functions }
+// /**
+//  * TODO: Square Butt Weld Sketch
+//  */
+function sketchSquareButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+{
+    var shape = definition.buttShape;
+    var angle = definition.buttAngle;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
+
+    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
+
+    if (shape == ButtShape.FLAT)
+        skLineSegment(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    else
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, distOut / 5),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    if (rootGap)
+    {
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLineVertical1", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineVertical2", {
+                    "start" : vector(rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+    }
+    else
+    {
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+    }
+}
+
+// /**
+//  * TODO: U-Butt Weld Sketch
+//  */
+function sketchUButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+{
+    // Obtiene la forma a aplicar a la soldadura en V
+    var shape = definition.buttShape;
+
+    // Obtiene el angulo y los valores del talon de raiz a aplicar a la soldadura en V
+    var angle = definition.buttAngle;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
+
+    // Obtiene el ancho de la parte superior de la soldadura
+    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
+
+    // Si la forma de la soldadura es plana crea una linea
+    if (shape == ButtShape.FLAT)
+        skLineSegment(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(distOut, 0 * meter)
+                });
+        // Si la forma de la soldadura No es plana, es convexa, crea un arco
+    else
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, distOut / 5),
+                    "end" : vector(distOut, 0 * meter)
+                });
+
+    // Si está activada la Soldadura con talon de raiz, crea la soldadura en V con talon de raiz
+    if (rootGap)
+    {
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLineVertical1", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineVertical2", {
+                    "start" : vector(rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+    }
+    // Si No está activada la Soldadura con talon de raiz, crea solo la soldadura en V
+    else
+    {
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+    }
+}
+
+// /**
+//  * TODO: J-Butt Weld Sketch
+//  */
+function sketchJButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+{
+    // Obtiene la forma a aplicar a la soldadura en V
+    var shape = definition.buttShape;
+
+    // Obtiene el angulo y los valores del talon de raiz a aplicar a la soldadura en V
+    var angle = definition.buttAngle;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
+
+    // Obtiene el ancho de la parte superior de la soldadura
+    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
+
+    // Si la forma de la soldadura es plana crea una linea
+    if (shape == ButtShape.FLAT)
+        skLineSegment(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(distOut, 0 * meter)
+                });
+        // Si la forma de la soldadura No es plana, es convexa, crea un arco
+    else
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, distOut / 5),
+                    "end" : vector(distOut, 0 * meter)
+                });
+
+    // Si está activada la Soldadura con talon de raiz, crea la soldadura en V con talon de raiz
+    if (rootGap)
+    {
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLineVertical1", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineVertical2", {
+                    "start" : vector(rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+    }
+    // Si No está activada la Soldadura con talon de raiz, crea solo la soldadura en V
+    else
+    {
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+    }
+}
+
+// Butt Weld functions }
 
 // Utility functions {
 
@@ -1012,6 +1117,12 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
             weldTypeStr = "V-Butt";
         else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
             weldTypeStr = "Double V-Butt";
+        else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+            weldTypeStr = "Square Butt";
+        else if (definition.weldType == WeldType.U_BUTT_WELD)
+            weldTypeStr = "U-Butt";
+        else if (definition.weldType == WeldType.J_BUTT_WELD)
+            weldTypeStr = "J-Butt";
         setProperty(context, {
                     "entities" : weld,
                     "propertyType" : PropertyType.NAME,
