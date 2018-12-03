@@ -206,8 +206,8 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             annotation { "Name" : "Color Blue", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
             isReal(definition.colorBlue, { (unitless) : [0.0, 0.25, 1] } as RealBoundSpec);
 
-            annotation { "Name" : "Transparency", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-            isReal(definition.colorAlpha, { (unitless) : [0.0, 1, 1] } as RealBoundSpec);
+            annotation { "Name" : "Transparency %", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+            isReal(definition.colorAlpha, { (unitless) : [0.0, 100, 100] } as RealBoundSpec);
         }
     }
     {
@@ -239,7 +239,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             setProperty(context, {
                         "entities" : qCreatedBy(id, EntityType.BODY),
                         "propertyType" : PropertyType.APPEARANCE,
-                        "value" : color(definition.colorRed, definition.colorGreen, definition.colorBlue, 1 - definition.colorTransparency)
+                        "value" : color(definition.colorRed, definition.colorGreen, definition.colorBlue, (100 - definition.colorTransparency) / 100.0)
                     });
 
             setProperty(context, {
