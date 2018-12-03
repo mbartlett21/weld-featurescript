@@ -1073,9 +1073,15 @@ function doRound(context is Context, id is Id, face1 is Query, face2 is Query) r
     var face2Plane = evPlane(context, {
             "face" : face2
         });
+    var face1Area = evArea(context, {
+            "entities" : face1
+        });
+    var face2Area = evArea(context, {
+            "entities" : face2
+        });
     var intersection = intersection(face1Plane, face2Plane);
     var angle = angleBetween(face1Plane.normal, -face2Plane.normal);
-    if (tolerantEquals(angle, 90 * degree))
+    if (tolerantEquals(face1Area, face2Area) && tolerantEquals(angle, 90 * degree))
     {
         opRevolve(context, id + "revolve", {
                     "entities" : face2,
