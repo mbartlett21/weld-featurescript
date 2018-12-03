@@ -1052,7 +1052,7 @@ function roundEnds(context is Context, id is Id, endFaces is Query) returns Quer
                     "targets" : face2
                 });
             if (collisions != [])
-                try silent
+                try
                 {
                     setExternalDisambiguation(context, id + unstableIdComponent(counter), qUnion([face1, face2]));
                     counter += 1;
@@ -1067,12 +1067,32 @@ function roundEnds(context is Context, id is Id, endFaces is Query) returns Quer
 
 function doRound(context is Context, id is Id, face1 is Query, face2 is Query) returns Query
 {
-    try(opLoft(context, id + "loft", {
+    var face1Plane = evPlane(context, {
+            "face" : face1
+        });
+    var face2Plane = evPlane(context, {
+            "face" : face2
+        });
+    var intersection = intersection(face1Plane, face2Plane);
+    var angle = angleBetween(face1Plane.normal, -face2Plane.normal);
+    if (tolerantEquals(angle, 90 * degree))
+    {
+        opRevolve(context, id + "revolve", {
+                    "entities" : face2,
+                    "axis" : intersection,
+                    "angleForward" : angle
+                });
+        return qCreatedBy(id + "revolve", EntityType.BODY);
+    }
+    else
+    {
+        opLoft(context, id + "loft", {
                     "profileSubqueries" : [face1, face2],
                     "derivativeInfo" : [{ "profileIndex" : 0, "matchCurvature" : true, "adjacentFaces" : qEdgeAdjacent(face1, EntityType.FACE) },
                             { "profileIndex" : 1, "matchCurvature" : true, "adjacentFaces" : qEdgeAdjacent(face2, EntityType.FACE) }]
-                }));
-    return qCreatedBy(id + "loft", EntityType.BODY);
+                });
+        return qCreatedBy(id + "loft", EntityType.BODY);
+    }
 }
 
 function miterEnds(context is Context, id is Id, endFaces is Query)
@@ -1095,7 +1115,7 @@ function miterEnds(context is Context, id is Id, endFaces is Query)
                     "targets" : face2
                 });
             if (collisions != [])
-                try silent
+                try
                 {
                     counter += 1;
                     setExternalDisambiguation(context, id + unstableIdComponent(counter), qUnion([face1, face2]));
