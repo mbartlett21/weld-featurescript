@@ -196,6 +196,18 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 
             annotation { "Name" : "Exclude from BOM", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
             definition.excludeFromBom is boolean;
+            
+            annotation { "Name" : "Color Red", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+            isReal(definition.colorRed, { (unitless) : [0.0, 0.25, 1] } as RealBoundSpec);
+
+            annotation { "Name" : "Color Green", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+            isReal(definition.colorGreen, { (unitless) : [0.0, 0.25, 1] } as RealBoundSpec);
+
+            annotation { "Name" : "Color Blue", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+            isReal(definition.colorBlue, { (unitless) : [0.0, 0.25, 1] } as RealBoundSpec);
+
+            annotation { "Name" : "Transparency", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+            isReal(definition.colorAlpha, { (unitless) : [0.0, 1, 1] } as RealBoundSpec);
         }
     }
     {
@@ -227,7 +239,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             setProperty(context, {
                         "entities" : qCreatedBy(id, EntityType.BODY),
                         "propertyType" : PropertyType.APPEARANCE,
-                        "value" : color(0.25)
+                        "value" : color(definition.colorRed, definition.colorGreen, definition.colorBlue, definition.colorAlpha)
                     });
 
             setProperty(context, {
@@ -1090,11 +1102,6 @@ function parallelEdges(context is Context, edges is Query, template is Query) re
             out = append(out, edge);
     }
     return qUnion(out);
-}
-
-function color(v is number)
-{
-    return color(v, v, v);
 }
 
 const weldVariableName = "weldNumberCounter";
