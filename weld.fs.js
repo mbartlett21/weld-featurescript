@@ -239,7 +239,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             setProperty(context, {
                         "entities" : qCreatedBy(id, EntityType.BODY),
                         "propertyType" : PropertyType.APPEARANCE,
-                        "value" : color(definition.colorRed, definition.colorGreen, definition.colorBlue, definition.colorAlpha)
+                        "value" : color(definition.colorRed, definition.colorGreen, definition.colorBlue, 1 - definition.colorTransparency)
                     });
 
             setProperty(context, {
