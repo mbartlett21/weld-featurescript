@@ -137,7 +137,7 @@ export enum ButtShape
 
 // Bounds and enums }
 
-annotation { "Feature Type Name" : "Weld" }
+annotation { "Feature Type Name" : "Weld", "Editing Logic Function" : "CodeELWeld" }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
@@ -212,7 +212,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 
                 if (definition.buttOtherSide)
                 {
-                    annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                    annotation { "Name" : "Weld Type", "UIHint" : "SHOW_LABEL" }
                     definition.weldType2 is WeldType2;
 
                     annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
@@ -305,6 +305,38 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             filletPropagation : false,
         }
     );
+                    
+// Editing Logic {
+
+/**
+ * Editing Logic Function
+ */
+export function CodeELWeld(context is Context, id is Id, oldDefinition is map, definition is map,
+    specifiedParameters is map, hiddenBodies is Query) returns map
+{
+    if (definition.weldType != WeldType.FILLET_WELD && !definition.buttOtherSide)
+    {
+        if (definition.weldType == WeldType.V_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.V_BUTT_WELD;
+        }
+        else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.SQUARE_BUTT_WELD;
+        }
+        else if (definition.weldType == WeldType.U_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.U_BUTT_WELD;
+        }
+        else if (definition.weldType == WeldType.J_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.J_BUTT_WELD;
+        }
+    }
+    return definition;
+}
+
+// Editing Logic }
 
 // Fillet functions {
 function filletWeld(context is Context, id is Id, definition is map, toDelete is box)
