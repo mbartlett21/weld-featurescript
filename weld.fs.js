@@ -54,6 +54,9 @@ export enum WeldFeatureSettingsSelection
  * @value FILLET_WELD : Fillet weld.
  * @value V_BUTT_WELD : V-Butt weld (beta).
  * @value DOUBLE_V_BUTT_WELD : Double V-Butt weld (beta).
+ * @value SQUARE_BUTT_WELD : Square Butt weld (ToDo).
+ * @value U_BUTT_WELD : U-Butt weld (ToDo).
+ * @value J_BUTT_WELD : J-Butt weld (ToDo).
  */
 export enum WeldType
 {
@@ -62,7 +65,13 @@ export enum WeldType
     annotation { "Name" : "V-Butt weld (beta)" }
     V_BUTT_WELD,
     annotation { "Name" : "Double V-Butt weld (beta)" }
-    DOUBLE_V_BUTT_WELD
+    DOUBLE_V_BUTT_WELD,
+    annotation { "Name" : "Square Butt weld (ToDo)" }
+    SQUARE_BUTT_WELD,
+    annotation { "Name" : "U-Butt weld (ToDo)" }
+    U_BUTT_WELD,
+    annotation { "Name" : "J-Butt weld (ToDo)" }
+    J_BUTT_WELD
 }
 
 /**
@@ -95,11 +104,11 @@ export enum FilletCornerShape
 }
 
 /**
- * Specifies the shape of VButt.
+ * Specifies the shape of Butt.
  * @value CONVEX : Convex.
  * @value FLAT : Flat.
  */
-export enum VButtShape
+export enum ButtShape
 {
     annotation { "Name" : "Convex" }
     CONVEX,
@@ -142,28 +151,43 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 definition.filletCornerShape is FilletCornerShape;
             }
 
-            else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+            else
             {
                 annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE, "MaxNumberOfPicks" : 1 }
-                definition.vButtEdge is Query;
+                definition.buttEdge is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-                definition.vButtShape is VButtShape;
+                definition.buttShape is ButtShape;
 
-                annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                isAngle(definition.vButtAngle, ANGLE_STRICT_180_BOUNDS);
-
-                annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
-                definition.vButtRootGap is boolean;
-
-                if (definition.vButtRootGap)
+                if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
                 {
-                    annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isLength(definition.vButtRootGapWidth, SHELL_OFFSET_BOUNDS);
-
-                    annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isLength(definition.vButtRootGapHeight, SHELL_OFFSET_BOUNDS);
+                    annotation { "Name" : "Distance", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.buttDist, BLEND_BOUNDS);
                 }
+
+                if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+                {
+                    annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isAngle(definition.buttAngle, ANGLE_STRICT_180_BOUNDS);
+                }
+
+                if (definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
+                {
+                    annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.buttRadius, BLEND_BOUNDS);
+                }
+            }
+
+            annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+            definition.buttRootGap is boolean;
+
+            if (definition.buttRootGap)
+            {
+                annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                isLength(definition.buttRootGapWidth, SHELL_OFFSET_BOUNDS);
+
+                annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                isLength(definition.buttRootGapHeight, SHELL_OFFSET_BOUNDS);
             }
         }
         else
@@ -183,11 +207,11 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         }
         else if (definition.weldType == WeldType.V_BUTT_WELD)
         {
-            vButtWeld(context, id, definition, toDelete);
+            buttWeld(context, id, definition, toDelete);
         }
         else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
         {
-            doubleVButtWeld(context, id, definition, toDelete);
+            doubleButtWeld(context, id, definition, toDelete);
         }
         else
             throw regenError("Weld type not supported", ["weldType"]);
@@ -561,19 +585,19 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
 
 // V-Butt Weld functions {
 
-// This function assumes definition.vButtEdge is of GeometryType.LINE
-function vButtWeld(context is Context, id is Id, definition is map, toDelete is box)
+// This function assumes definition.buttEdge is of GeometryType.LINE
+function buttWeld(context is Context, id is Id, definition is map, toDelete is box)
 {
 
-    verifyNonemptyQuery(context, definition, "vButtEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
-    var edge1 = definition.vButtEdge;
+    verifyNonemptyQuery(context, definition, "buttEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
+    var edge1 = definition.buttEdge;
 
-    var shape = definition.vButtShape;
+    var shape = definition.buttShape;
 
-    var angle = definition.vButtAngle;
-    var rootGap = definition.vButtRootGap;
-    var rootGapWidth = definition.vButtRootGapWidth;
-    var rootGapHeight = definition.vButtRootGapHeight;
+    var angle = definition.buttAngle;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
 
     // Parts
     var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];
@@ -665,7 +689,7 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
             "sketchPlane" : skPlane
         });
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
-    if (shape == VButtShape.FLAT)
+    if (shape == ButtShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
@@ -744,25 +768,25 @@ function vButtWeld(context is Context, id is Id, definition is map, toDelete is 
             });
 
     extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
-    extrudeDef.startDepth= min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
+    extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
     // Extrude the second time for the part
     opExtrude(context, id + "extrude2", extrudeDef);
     setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
 }
 
-// This function assumes definition.vButtEdge is of GeometryType.LINE
-function doubleVButtWeld(context is Context, id is Id, definition is map, toDelete is box)
+// This function assumes definition.buttEdge is of GeometryType.LINE
+function doubleButtWeld(context is Context, id is Id, definition is map, toDelete is box)
 {
 
-    verifyNonemptyQuery(context, definition, "vButtEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
-    var edge1 = definition.vButtEdge;
+    verifyNonemptyQuery(context, definition, "buttEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
+    var edge1 = definition.buttEdge;
 
-    var shape = definition.vButtShape;
+    var shape = definition.buttShape;
 
-    var angle = definition.vButtAngle;
-    var rootGap = definition.vButtRootGap;
-    var rootGapWidth = definition.vButtRootGapWidth;
-    var rootGapHeight = definition.vButtRootGapHeight;
+    var angle = definition.buttAngle;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
 
     // Parts
     var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];
@@ -856,7 +880,7 @@ function doubleVButtWeld(context is Context, id is Id, definition is map, toDele
             "sketchPlane" : skPlane
         });
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) / 2 + rootGapWidth / 2 : tan(angle / 2) * thickness / 2;
-    if (shape == VButtShape.FLAT)
+    if (shape == ButtShape.FLAT)
     {
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
@@ -960,7 +984,7 @@ function doubleVButtWeld(context is Context, id is Id, definition is map, toDele
             });
 
     extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
-    extrudeDef.startDepth= min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
+    extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
     // Extrude the second time for the part
     opExtrude(context, id + "extrude2", extrudeDef);
     setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
