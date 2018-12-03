@@ -1036,6 +1036,12 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
             weldTypeStr = "V-Butt";
         else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
             weldTypeStr = "Double V-Butt";
+        else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+            weldTypeStr = "Square Butt";
+        else if (definition.weldType == WeldType.U_BUTT_WELD)
+            weldTypeStr = "U-Butt";
+        else if (definition.weldType == WeldType.J_BUTT_WELD)
+            weldTypeStr = "J-Butt";
         setProperty(context, {
                     "entities" : weld,
                     "propertyType" : PropertyType.NAME,
