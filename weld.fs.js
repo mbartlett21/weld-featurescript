@@ -78,13 +78,16 @@ export enum WeldType
  * Specifies the shape of the welding.
  * @value CONVEX : Convex.
  * @value CONCAVE : Concave.
+ * @value FLAT : Flat.
  */
 export enum FilletShape
 {
     annotation { "Name" : "Convex" }
     CONVEX,
     annotation { "Name" : "Concave" }
-    CONCAVE
+    CONCAVE,
+    annotation { "Name" : "Flat" }
+    FLAT
 }
 
 /**
@@ -380,11 +383,21 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
                 "start" : vector(0, 0) * inch,
                 "end" : face2Point
             });
-    skArc(sketch, "arc", {
+    if (shape != FilletShape.FLAT)
+    {
+            skArc(sketch, "arc", {
                 "start" : face1Point,
                 "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == FilletShape.CONVEX ? 1.15 : 0.75),
                 "end" : face2Point
             });
+    }
+    else
+    {
+            skLineSegment(sketch, "face3Line", {
+                "start" : face1Point,
+                "end" : face2Point
+            });
+    }
     skSolve(sketch);
     toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
 
@@ -512,11 +525,21 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
                 "start" : vector(0, 0) * inch,
                 "end" : face2Point
             });
-    skArc(sketch, "arc", {
+    if (shape != FilletShape.FLAT)
+    {
+            skArc(sketch, "arc", {
                 "start" : face1Point,
                 "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == FilletShape.CONVEX ? 1.15 : 0.75),
                 "end" : face2Point
             });
+    }
+    else
+    {
+            skLineSegment(sketch, "face3Line", {
+                "start" : face1Point,
+                "end" : face2Point
+            });
+    }
     skSolve(sketch);
     toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
 
