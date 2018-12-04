@@ -354,6 +354,12 @@ export function CodeELWeld(context is Context, id is Id, oldDefinition is map, d
             definition.weldType2 = WeldType2.J_BUTT_WELD;
         }
     }
+    
+    if (definition.filletShape != FilletShape.FLAT && !specifiedParameters.filletOffset)
+    {
+        definition.filletOffset = definition.filletSize / 5.0;
+    }
+    
     return definition;
 }
 
