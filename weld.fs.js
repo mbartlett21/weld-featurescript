@@ -94,7 +94,7 @@ export enum WeldType2
 }
 
 /**
- * Specifies the shape of the welding.
+ * Specifies the shape of the Fillet welding.
  * @value CONVEX : Convex.
  * @value CONCAVE : Concave.
  * @value FLAT : Flat.
@@ -107,6 +107,19 @@ export enum FilletShape
     CONCAVE,
     annotation { "Name" : "Flat" }
     FLAT
+}
+
+/**
+ * Specifies the dimension of the Fillet welding.
+ * @value SIDE : Weld side (z).
+ * @value HEIGHT : Weld height (a).
+ */
+export enum FilletDimension
+{
+    annotation { "Name" : "Side (z)" }
+    SIDE,
+    annotation { "Name" : "Height (a)" }
+    HEIGHT
 }
 
 /**
@@ -162,6 +175,9 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
                 definition.filletShape is FilletShape;
+                        
+                annotation { "Name" : "Dimensions", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                definition.filletDimension is FilletDimension;
 
                 annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                 isLength(definition.filletSize, BLEND_BOUNDS);
@@ -398,6 +414,7 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                     "face1Def" : faceDefs1[i],
                     "face2Def" : faceDefs2[j],
                     "filletShape" : definition.filletShape,
+                    "filletDimension" : definition.filletDimension,
                     "filletSize" : definition.filletSize,
                     "filletPropagation" : definition.filletPropagation
                 };
@@ -467,7 +484,11 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     var face2Dir = -cross(skPlane.normal, face2Plane.normal);
 
     var angle = angleBetween(face1Dir, face2Dir);
-    var size = definition.filletSize / sin(angle);
+    var size = definition.filletSize;
+    if (definition.filletDimension == FilletDimension.HEIGHT)
+    {
+        size = size / cos(angle / 2.0);
+    }  
 
     var face1Point = worldToPlane(skPlane, intersectionLine.origin + face1Dir * size);
     var face1SkDir = normalize(face1Point);
