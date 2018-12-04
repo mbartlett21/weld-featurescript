@@ -608,11 +608,12 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
 {
     verifyNonemptyQuery(context, definition, "buttEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
     var edges = evaluateQuery(context, definition.buttEdge);
-    
+
     for (var i = 0; i < size(edges); i += 1)
     {
         var edge1 = edges[i];
-        var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];        
+        var subId = id + unstableIdComponent(i);
+        setExternalDisambiguation(context, subId, edge1);
 
         // Parts
         var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];
@@ -620,25 +621,25 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         // throw regenError("There must be two parts in the part studio");
 
         var partsDistResult = evDistance(context, {
-            "side0" : edge1,
-            "side1" : qSubtraction(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), part1)
-          });
+                "side0" : edge1,
+                "side1" : qSubtraction(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), part1)
+            });
         var part2 = try(evaluateQuery(
-                context,
-                qNthElement(
-                    qSubtraction(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), part1),
-                    partsDistResult.sides[1].index
-                )
-            )[0]);
+                    context,
+                    qNthElement(
+                        qSubtraction(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), part1),
+                        partsDistResult.sides[1].index
+                    )
+                )[0]);
 
         // Edge 2
         var edge2 = evaluateQuery(
-            context,
-            qClosestTo(
-                parallelEdges(context, qOwnedByBody(part2, EntityType.EDGE), edge1),
-                evEdgeTangentLine(context, { "edge" : edge1, "parameter" : 0.5 }).origin
-            )
-          )[0];
+                context,
+                qClosestTo(
+                    parallelEdges(context, qOwnedByBody(part2, EntityType.EDGE), edge1),
+                    evEdgeTangentLine(context, { "edge" : edge1, "parameter" : 0.5 }).origin
+                )
+            )[0];
 
         // Find closest faces
         var faces1 = evaluateQuery(context, qEdgeAdjacent(edge1, EntityType.FACE));
@@ -694,7 +695,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         if (partsDistResult.distance > 0.0)
         {
             distanceToExtend = partsDistResult.distance / 2.0;
-            opOffsetFace(context, id + "offsetFaces", {
+            opOffsetFace(context, subId + "offsetFaces", {
                         "moveFaces" : qUnion([face1, face2]),
                         "offsetDistance" : distanceToExtend
                     });
@@ -704,7 +705,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         var skPlane = plane(edge1Line.origin, edge1Line.direction, xAxis);
         skPlane.origin = project(skPlane, (edge1Line.origin + edge2Line.origin) / 2);
 
-        var profileSketch = newSketchOnPlane(context, id + ("profileSketch" ~i), {
+        var profileSketch = newSketchOnPlane(context, subId + "profileSketch", {
                 "sketchPlane" : skPlane
             });
 
@@ -722,7 +723,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
 
         skSolve(profileSketch);
 
-        toDelete[] = append(toDelete[], qCreatedBy(id + ("profileSketch" ~i)));
+        toDelete[] = append(toDelete[], qCreatedBy(subId + "profileSketch"));
 
         // Finding extrude amounts
         var skCSys = planeToCSys(skPlane);
@@ -737,7 +738,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
                 "cSys" : skCSys
             });
         var extrudeDef = {
-            "entities" : qCreatedBy(id + ("profileSketch" ~i), EntityType.FACE),
+            "entities" : qCreatedBy(subId + "profileSketch", EntityType.FACE),
             "direction" : skPlane.normal,
             "endBound" : BoundingType.BLIND,
             "endDepth" : max(face1Box.maxCorner[2], face2Box.maxCorner[2]),
@@ -746,18 +747,19 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         };
 
         // Extrude the first time to boolean
-        opExtrude(context, id + ("extrude1" ~i), extrudeDef);
-        opBoolean(context, id + ("boolean" ~i), {
-                "tools" : qCreatedBy(id + ("extrude1" ~i), EntityType.BODY),
-                "targets" : qUnion([part1, part2]),
-                "operationType" : BooleanOperationType.SUBTRACTION
-            });
+        opExtrude(context, subId + "extrude1", extrudeDef);
+        opBoolean(context, subId + "boolean", {
+                    "tools" : qCreatedBy(subId + "extrude1", EntityType.BODY),
+                    "targets" : qUnion([part1, part2]),
+                    "operationType" : BooleanOperationType.SUBTRACTION
+                });
 
         extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
         extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
         // Extrude the second time for the part
-        opExtrude(context, id + ("extrude2" ~i), extrudeDef);
-        setWeldNumbers(context, definition, qCreatedBy(id + ("extrude2" ~i), EntityType.BODY));
+        opExtrude(context, subId + "extrude2", extrudeDef);
+        setWeldNumbers(context, definition, qCreatedBy(subId + "extrude2", EntityType.BODY));
+    }
 }
 
 // /**
