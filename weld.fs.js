@@ -467,7 +467,7 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     var face2Dir = -cross(skPlane.normal, face2Plane.normal);
 
     var angle = angleBetween(face1Dir, face2Dir);
-    var size = definition.filletSize / sin(angle);
+    var size = definition.filletSize;
 
     var face1Point = worldToPlane(skPlane, intersectionLine.origin + face1Dir * size);
     var face1SkDir = normalize(face1Point);
