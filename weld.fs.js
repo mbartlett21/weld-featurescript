@@ -155,7 +155,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             }
             else
             {
-                annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE, "MaxNumberOfPicks" : 1 }
+                annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE }
                 definition.buttEdge is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
@@ -615,152 +615,163 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
 
 // Butt Weld functions {
 
-// This function assumes definition.buttEdge is of GeometryType.LINE
+// This function assumes definition.buttEdge is a query with one or more GeometryType.LINE
 function buttWeld(context is Context, id is Id, definition is map, toDelete is box)
 {
     verifyNonemptyQuery(context, definition, "buttEdge", ErrorStringEnum.CANNOT_RESOLVE_ENTITIES);
-    var edge1 = definition.buttEdge;
+    var edges = evaluateQuery(context, definition.buttEdge);
 
-    // Parts
-    var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];
-    if (evaluateQuery(context, qSubtraction(qBodyType(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), BodyType.SOLID), part1)) == [])
-        throw regenError("There must be two parts in the part studio");
-
-    var partsDistResult = evDistance(context, {
-            "side0" : edge1,
-            "side1" : qSubtraction(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), part1)
-        });
-    var part2 = try(evaluateQuery(
-                context,
-                qNthElement(
-                    qSubtraction(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), part1),
-                    partsDistResult.sides[1].index
-                )
-            )[0]);
-
-    // Edge 2
-    var edge2 = evaluateQuery(
-            context,
-            qClosestTo(
-                parallelEdges(context, qOwnedByBody(part2, EntityType.EDGE), edge1),
-                evEdgeTangentLine(context, { "edge" : edge1, "parameter" : 0.5 }).origin
-            )
-        )[0];
-
-    // Find closest faces
-    var faces1 = evaluateQuery(context, qEdgeAdjacent(edge1, EntityType.FACE));
-    var faces2 = evaluateQuery(context, qEdgeAdjacent(edge2, EntityType.FACE));
-    var minDistSqValue = 500 * 500;
-    var face1;
-    var face2;
-    for (var testFace1 in faces1)
+    for (var i = 0; i < size(edges); i += 1)
     {
-        var testFaceC1 = evApproximateCentroid(context, {
-                "entities" : testFace1
+        var edge1 = edges[i];
+        var subId = id + unstableIdComponent(i);
+        setExternalDisambiguation(context, subId, edge1);
+
+        // Parts
+        var part1 = evaluateQuery(context, qOwnerBody(edge1))[0];
+        // if (evaluateQuery(context, qSubtraction(qBodyType(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), BodyType.SOLID), part1)) == [])
+        // throw regenError("There must be two parts in the part studio");
+
+        var partsDistResult = evDistance(context, {
+                "side0" : edge1,
+                "side1" : qSubtraction(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), part1)
             });
-        for (var testFace2 in faces2)
+        var part2 = try(evaluateQuery(
+                    context,
+                    qNthElement(
+                        qSubtraction(qSketchFilter(qConstructionFilter(qEverything(EntityType.BODY), ConstructionObject.NO), SketchObject.NO), part1),
+                        partsDistResult.sides[1].index
+                    )
+                )[0]);
+
+        // Edge 2
+        var edge2 = evaluateQuery(
+                context,
+                qClosestTo(
+                    parallelEdges(context, qOwnedByBody(part2, EntityType.EDGE), edge1),
+                    evEdgeTangentLine(context, { "edge" : edge1, "parameter" : 0.5 }).origin
+                )
+            )[0];
+
+        // Find closest faces
+        var faces1 = evaluateQuery(context, qEdgeAdjacent(edge1, EntityType.FACE));
+        var faces2 = evaluateQuery(context, qEdgeAdjacent(edge2, EntityType.FACE));
+        var minDistSqValue = 500 * 500;
+        var face1;
+        var face2;
+        for (var testFace1 in faces1)
         {
-            var testFaceC2 = evApproximateCentroid(context, {
-                    "entities" : testFace2
+            var testFaceC1 = evApproximateCentroid(context, {
+                    "entities" : testFace1
                 });
-            var distSqVal = squaredNorm(testFaceC1 - testFaceC2).value;
-            if (distSqVal < minDistSqValue)
+            for (var testFace2 in faces2)
             {
-                face1 = testFace1;
-                face2 = testFace2;
-                minDistSqValue = distSqVal;
+                var testFaceC2 = evApproximateCentroid(context, {
+                        "entities" : testFace2
+                    });
+                var distSqVal = squaredNorm(testFaceC1 - testFaceC2).value;
+                if (distSqVal < minDistSqValue)
+                {
+                    face1 = testFace1;
+                    face2 = testFace2;
+                    minDistSqValue = distSqVal;
+                }
             }
         }
+
+        // EdgeLines
+        var edge1Line = evEdgeTangentLine(context, {
+                "edge" : edge1,
+                "face" : face1,
+                "parameter" : 0.5
+            });
+        var edge2Line = evEdgeTangentLine(context, {
+                "edge" : edge2,
+                "face" : face2,
+                "parameter" : 0.5
+            });
+        if (!parallelVectors(edge1Line.direction, edge2Line.direction))
+            throw regenError("Edges must be parallel", qUnion([edge1, edge2]));
+
+        // Thickness
+        var thicknessEdge = evaluateQuery(context, qIntersection([qVertexAdjacent(edge1, EntityType.EDGE), qEdgeAdjacent(face1, EntityType.EDGE)]))[0];
+        var thickness = evLength(context, {
+                "entities" : thicknessEdge
+            });
+
+        // Sketch x axis
+        var xAxis = extractDirection(context, face1);
+
+        // Extend faces and remove weld gap
+        var distanceToExtend = 0.0 * meter;
+        if (partsDistResult.distance > 0.0)
+        {
+            distanceToExtend = partsDistResult.distance / 2.0;
+            opOffsetFace(context, subId + "offsetFaces", {
+                        "moveFaces" : qUnion([face1, face2]),
+                        "offsetDistance" : distanceToExtend
+                    });
+        }
+
+        // Sketch
+        var skPlane = plane(edge1Line.origin, edge1Line.direction, xAxis);
+        skPlane.origin = project(skPlane, (edge1Line.origin + edge2Line.origin) / 2);
+
+        var profileSketch = newSketchOnPlane(context, subId + "profileSketch", {
+                "sketchPlane" : skPlane
+            });
+
+        // Create each weldtype sketch
+        if (definition.weldType == WeldType.V_BUTT_WELD)
+            sketchVButtWeld(context, definition, thickness, profileSketch);
+        else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
+            sketchDoubleVButtWeld(context, definition, thickness, profileSketch);
+        else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+            sketchSquareButtWeld(context, definition, thickness, profileSketch);
+        else if (definition.weldType == WeldType.U_BUTT_WELD)
+            sketchUButtWeld(context, definition, thickness, profileSketch);
+        else if (definition.weldType == WeldType.J_BUTT_WELD)
+            sketchJButtWeld(context, definition, thickness, profileSketch);
+
+        skSolve(profileSketch);
+
+        toDelete[] = append(toDelete[], qCreatedBy(subId + "profileSketch"));
+
+        // Finding extrude amounts
+        var skCSys = planeToCSys(skPlane);
+        var face1Box = evBox3d(context, {
+                "topology" : face1,
+                "tight" : true,
+                "cSys" : skCSys
+            });
+        var face2Box = evBox3d(context, {
+                "topology" : face2,
+                "tight" : true,
+                "cSys" : skCSys
+            });
+        var extrudeDef = {
+            "entities" : qCreatedBy(subId + "profileSketch", EntityType.FACE),
+            "direction" : skPlane.normal,
+            "endBound" : BoundingType.BLIND,
+            "endDepth" : max(face1Box.maxCorner[2], face2Box.maxCorner[2]),
+            "startBound" : BoundingType.BLIND,
+            "startDepth" : max(-face1Box.minCorner[2], -face2Box.minCorner[2]),
+        };
+
+        // Extrude the first time to boolean
+        opExtrude(context, subId + "extrude1", extrudeDef);
+        opBoolean(context, subId + "boolean", {
+                    "tools" : qCreatedBy(subId + "extrude1", EntityType.BODY),
+                    "targets" : qUnion([part1, part2]),
+                    "operationType" : BooleanOperationType.SUBTRACTION
+                });
+
+        extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
+        extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
+        // Extrude the second time for the part
+        opExtrude(context, subId + "extrude2", extrudeDef);
+        setWeldNumbers(context, definition, qCreatedBy(subId + "extrude2", EntityType.BODY));
     }
-
-    // EdgeLines
-    var edge1Line = evEdgeTangentLine(context, {
-            "edge" : edge1,
-            "face" : face1,
-            "parameter" : 0.5
-        });
-    var edge2Line = evEdgeTangentLine(context, {
-            "edge" : edge2,
-            "face" : face2,
-            "parameter" : 0.5
-        });
-    if (!parallelVectors(edge1Line.direction, edge2Line.direction))
-        throw regenError("Edges must be parallel", qUnion([edge1, edge2]));
-
-    // Thickness
-    var thicknessEdge = evaluateQuery(context, qIntersection([qVertexAdjacent(edge1, EntityType.EDGE), qEdgeAdjacent(face1, EntityType.EDGE)]))[0];
-    var thickness = evLength(context, {
-            "entities" : thicknessEdge
-        });
-
-    // Sketch x axis
-    var xAxis = extractDirection(context, face1);
-
-    // Extend faces and remove weld gap
-    var distanceToExtend = partsDistResult.distance / 2;
-    opOffsetFace(context, id + "offsetFaces", {
-                "moveFaces" : qUnion([face1, face2]),
-                "offsetDistance" : distanceToExtend
-            });
-
-    // Sketch
-    var skPlane = plane(edge1Line.origin, edge1Line.direction, xAxis);
-    skPlane.origin = project(skPlane, (edge1Line.origin + edge2Line.origin) / 2);
-
-    var profileSketch = newSketchOnPlane(context, id + "profileSketch", {
-            "sketchPlane" : skPlane
-        });
-
-    // Create each weldtype sketch
-    if (definition.weldType == WeldType.V_BUTT_WELD)
-        sketchVButtWeld(context, definition, thickness, profileSketch);
-    else if (definition.weldType == WeldType.DOUBLE_V_BUTT_WELD)
-        sketchDoubleVButtWeld(context, definition, thickness, profileSketch);
-    else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
-        sketchSquareButtWeld(context, definition, thickness, profileSketch);
-    else if (definition.weldType == WeldType.U_BUTT_WELD)
-        sketchUButtWeld(context, definition, thickness, profileSketch);
-    else if (definition.weldType == WeldType.J_BUTT_WELD)
-        sketchJButtWeld(context, definition, thickness, profileSketch);
-
-    skSolve(profileSketch);
-
-    toDelete[] = append(toDelete[], qCreatedBy(id + "profileSketch"));
-
-    // Finding extrude amounts
-    var skCSys = planeToCSys(skPlane);
-    var face1Box = evBox3d(context, {
-            "topology" : face1,
-            "tight" : true,
-            "cSys" : skCSys
-        });
-    var face2Box = evBox3d(context, {
-            "topology" : face2,
-            "tight" : true,
-            "cSys" : skCSys
-        });
-    var extrudeDef = {
-        "entities" : qCreatedBy(id + "profileSketch", EntityType.FACE),
-        "direction" : skPlane.normal,
-        "endBound" : BoundingType.BLIND,
-        "endDepth" : max(face1Box.maxCorner[2], face2Box.maxCorner[2]),
-        "startBound" : BoundingType.BLIND,
-        "startDepth" : max(-face1Box.minCorner[2], -face2Box.minCorner[2]),
-    };
-
-    // Extrude the first time to boolean
-    opExtrude(context, id + "extrude", extrudeDef);
-    opBoolean(context, id + "boolean", {
-                "tools" : qCreatedBy(id + "extrude", EntityType.BODY),
-                "targets" : qUnion([part1, part2]),
-                "operationType" : BooleanOperationType.SUBTRACTION
-            });
-
-    extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
-    extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
-    // Extrude the second time for the part
-    opExtrude(context, id + "extrude2", extrudeDef);
-    setWeldNumbers(context, definition, qCreatedBy(id + "extrude2", EntityType.BODY));
 }
 
 // /**
