@@ -54,7 +54,7 @@ export enum WeldFeatureSettingsSelection
  * @value FILLET_WELD : Fillet weld.
  * @value V_BUTT_WELD : V-Butt weld (beta).
  * @value DOUBLE_V_BUTT_WELD : Double V-Butt weld (beta).
- * @value SQUARE_BUTT_WELD : Square Butt weld (ToDo).
+ * @value SQUARE_BUTT_WELD : Square Butt weld.
  * @value U_BUTT_WELD : U-Butt weld (ToDo).
  * @value J_BUTT_WELD : J-Butt weld (ToDo).
  */
@@ -62,11 +62,11 @@ export enum WeldType
 {
     annotation { "Name" : "Fillet weld" }
     FILLET_WELD,
-    annotation { "Name" : "V-Butt weld (beta)" }
+    annotation { "Name" : "V-Butt weld" }
     V_BUTT_WELD,
-    annotation { "Name" : "Double V-Butt weld (beta)" }
+    annotation { "Name" : "Double V-Butt weld" }
     DOUBLE_V_BUTT_WELD,
-    annotation { "Name" : "Square Butt weld (ToDo)" }
+    annotation { "Name" : "Square Butt weld" }
     SQUARE_BUTT_WELD,
     annotation { "Name" : "U-Butt weld (ToDo)" }
     U_BUTT_WELD,
@@ -1018,12 +1018,11 @@ function sketchDoubleVButtWeld(context is Context, definition is map, thickness 
 function sketchSquareButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
 {
     var shape = definition.buttShape;
-    var angle = definition.buttAngle;
     var rootGap = definition.buttRootGap;
     var rootGapWidth = definition.buttRootGapWidth;
     var rootGapHeight = definition.buttRootGapHeight;
 
-    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
+    var distOut = definition.buttDist / 2.0;
 
     if (shape == ButtShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
@@ -1050,24 +1049,36 @@ function sketchSquareButtWeld(context is Context, definition is map, thickness i
                     "start" : vector(rootGapWidth / 2, -thickness),
                     "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
                 });
-        skLineSegment(profileSketch, "sideLine1", {
-                    "start" : vector(-distOut, 0 * meter),
+        skLineSegment(profileSketch, "sideLineHorizontal1", {
+                    "start" : vector(-distOut, -thickness + rootGapHeight),
                     "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
                 });
-        skLineSegment(profileSketch, "sideLine2", {
-                    "start" : vector(distOut, 0 * meter),
+                skLineSegment(profileSketch, "sideLineVertical3", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(-distOut, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineHorizontal2", {
+                    "start" : vector(distOut, -thickness + rootGapHeight),
                     "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineVertical4", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(distOut, -thickness + rootGapHeight)
                 });
     }
     else
     {
         skLineSegment(profileSketch, "sideLine1", {
                     "start" : vector(-distOut, 0 * meter),
-                    "end" : vector(0 * meter, -thickness)
+                    "end" : vector(-distOut, -thickness)
                 });
         skLineSegment(profileSketch, "sideLine2", {
                     "start" : vector(distOut, 0 * meter),
-                    "end" : vector(0 * meter, -thickness)
+                    "end" : vector(distOut, -thickness)
+                });
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(-distOut, -thickness),
+                    "end" : vector(distOut, -thickness)
                 });
     }
 }
