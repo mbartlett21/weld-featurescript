@@ -210,7 +210,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             isReal(definition.colorBlue, { (unitless) : [0.0, 0.25, 1] } as RealBoundSpec);
 
             annotation { "Name" : "Transparency %", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-            isReal(definition.colorAlpha, { (unitless) : [0.0, 100, 100] } as RealBoundSpec);
+            isReal(definition.colorTransparency, { (unitless) : [0.0, 100, 100] } as RealBoundSpec);
         }
     }
     {
