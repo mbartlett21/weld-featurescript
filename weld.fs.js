@@ -165,6 +165,12 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 
                 annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                 isLength(definition.filletSize, BLEND_BOUNDS);
+                        
+                if (definition.filletShape != FilletShape.FLAT)
+                {
+                    annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.filletOffset, BLEND_BOUNDS);
+                }
 
                 annotation { "Name" : "Tangent propagation" }
                 definition.filletPropagation is boolean;
