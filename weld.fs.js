@@ -75,6 +75,25 @@ export enum WeldType
 }
 
 /**
+ * Specifies the type of welding.
+ * @value V_BUTT_WELD : V-Butt weld (beta).
+ * @value SQUARE_BUTT_WELD : Square Butt weld (ToDo).
+ * @value U_BUTT_WELD : U-Butt weld (ToDo).
+ * @value J_BUTT_WELD : J-Butt weld (ToDo).
+ */
+export enum WeldType2
+{
+    annotation { "Name" : "V-Butt weld (beta)" }
+    V_BUTT_WELD,
+    annotation { "Name" : "Square Butt weld (ToDo)" }
+    SQUARE_BUTT_WELD,
+    annotation { "Name" : "U-Butt weld (ToDo)" }
+    U_BUTT_WELD,
+    annotation { "Name" : "J-Butt weld (ToDo)" }
+    J_BUTT_WELD
+}
+
+/**
  * Specifies the shape of the welding.
  * @value CONVEX : Convex.
  * @value CONCAVE : Concave.
@@ -121,7 +140,7 @@ export enum ButtShape
 
 // Bounds and enums }
 
-annotation { "Feature Type Name" : "Weld" }
+annotation { "Feature Type Name" : "Weld", "Editing Logic Function" : "CodeELWeld" }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
@@ -189,6 +208,48 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 
                     annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isLength(definition.buttRootGapHeight, SHELL_OFFSET_BOUNDS);
+                }
+                
+                annotation { "Name" : "Other side", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
+                definition.buttOtherSide is boolean;
+
+                if (definition.buttOtherSide)
+                {
+                    annotation { "Name" : "Weld Type", "UIHint" : "SHOW_LABEL" }
+                    definition.weldType2 is WeldType2;
+
+                    annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                    definition.buttShape2 is ButtShape;
+
+                    if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
+                    {
+                        annotation { "Name" : "Distance", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                        isLength(definition.buttDist2, BLEND_BOUNDS);
+                    }
+
+                    if (definition.weldType2 == WeldType2.V_BUTT_WELD)
+                    {
+                        annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                        isAngle(definition.buttAngle2, ANGLE_STRICT_180_BOUNDS);
+                    }
+
+                    if (definition.weldType2 == WeldType2.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
+                    {
+                        annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                        isLength(definition.buttRadius2, BLEND_BOUNDS);
+                    }
+
+                    annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+                    definition.buttRootGap2 is boolean;
+
+                    if (definition.buttRootGap2)
+                    {
+                        annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                        isLength(definition.buttRootGapWidth2, SHELL_OFFSET_BOUNDS);
+
+                        annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                        isLength(definition.buttRootGapHeight2, SHELL_OFFSET_BOUNDS);
+                    }
                 }
             }
         }
@@ -259,6 +320,38 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             filletPropagation : false,
         }
     );
+                    
+// Editing Logic {
+
+/**
+ * Editing Logic Function
+ */
+export function CodeELWeld(context is Context, id is Id, oldDefinition is map, definition is map,
+    specifiedParameters is map, hiddenBodies is Query) returns map
+{
+    if (definition.weldType != WeldType.FILLET_WELD && !definition.buttOtherSide)
+    {
+        if (definition.weldType == WeldType.V_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.V_BUTT_WELD;
+        }
+        else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.SQUARE_BUTT_WELD;
+        }
+        else if (definition.weldType == WeldType.U_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.U_BUTT_WELD;
+        }
+        else if (definition.weldType == WeldType.J_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.J_BUTT_WELD;
+        }
+    }
+    return definition;
+}
+
+// Editing Logic }
 
 // Fillet functions {
 function filletWeld(context is Context, id is Id, definition is map, toDelete is box)
