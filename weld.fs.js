@@ -167,15 +167,14 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 definition.filletEntities2 is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-
                 definition.filletShape is WeldShape;
-                        
+
                 annotation { "Name" : "Dimensions", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
                 definition.filletDimension is FilletDimension;
 
                 annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                 isLength(definition.filletSize, BLEND_BOUNDS);
-                        
+
                 if (definition.filletShape != WeldShape.FLAT)
                 {
                     annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
@@ -190,7 +189,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             }
             else
             {
-                annotation { "Name" : "Welded edge", "Filter" : EntityType.EDGE }
+                annotation { "Name" : "Welded edges", "Filter" : EntityType.EDGE }
                 definition.buttEdge is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
@@ -202,10 +201,13 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     isLength(definition.buttDist, BLEND_BOUNDS);
                 }
 
-                if (definition.weldType == WeldType.V_BUTT_WELD)
+                annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                isAngle(definition.buttAngle, ANGLE_STRICT_90_BOUNDS);
+
+                if (definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
                 {
-                    annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isAngle(definition.buttAngle, ANGLE_STRICT_180_BOUNDS);
+                    annotation { "Name" : "Opposite direction", "UIHint" : "OPPOSITE_DIRECTION" }
+                    definition.oppositeDirection is boolean;
                 }
 
                 if (definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
@@ -213,14 +215,14 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isLength(definition.buttRadius, BLEND_BOUNDS);
                 }
-                        
+
                 if (definition.buttShape != WeldShape.FLAT)
                 {
                     annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isLength(definition.buttOffset, BLEND_BOUNDS);
                 }
 
-                annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+                annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
                 definition.buttRootGap is boolean;
 
                 if (definition.buttRootGap)
@@ -231,7 +233,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isLength(definition.buttRootGapHeight, ZERO_INCLUSIVE_OFFSET_BOUNDS);
                 }
-                
+
                 annotation { "Name" : "Other side", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
                 definition.buttOtherSide is boolean;
 
@@ -249,10 +251,13 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                         isLength(definition.buttDist2, BLEND_BOUNDS);
                     }
 
-                    if (definition.weldType2 == WeldType2.V_BUTT_WELD)
+                    annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isAngle(definition.buttAngle2, ANGLE_STRICT_90_BOUNDS);
+
+                    if (definition.weldType2 == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
                     {
-                        annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isAngle(definition.buttAngle2, ANGLE_STRICT_180_BOUNDS);
+                        annotation { "Name" : "Opposite direction", "UIHint" : "OPPOSITE_DIRECTION" }
+                        definition.oppositeDirection2 is boolean;
                     }
 
                     if (definition.weldType2 == WeldType2.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
@@ -261,7 +266,13 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                         isLength(definition.buttRadius2, BLEND_BOUNDS);
                     }
 
-                    annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
+                    if (definition.buttShape != WeldShape.FLAT)
+                    {
+                        annotation { "Name" : "Distancia convexidad", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                        isLength(definition.buttOffset2, BLEND_BOUNDS);
+                    }
+
+                    annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
                     definition.buttRootGap2 is boolean;
 
                     if (definition.buttRootGap2)
@@ -282,7 +293,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 
             annotation { "Name" : "Exclude from BOM", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
             definition.excludeFromBom is boolean;
-            
+
             annotation { "Name" : "Color Red", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
             isReal(definition.colorRed, { (unitless) : [0.0, 0.25, 1] } as RealBoundSpec);
 
@@ -342,7 +353,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
             filletPropagation : false,
         }
     );
-                    
+
 // Editing Logic {
 
 /**
@@ -374,12 +385,12 @@ export function CodeELWeld(context is Context, id is Id, oldDefinition is map, d
             definition.weldType2 = WeldType2.J_BUTT_WELD;
         }
     }
-    
+
     if (definition.filletShape != WeldShape.FLAT && !specifiedParameters.filletOffset)
     {
         definition.filletOffset = definition.filletSize / 5.0;
     }
-    
+
     return definition;
 }
 
@@ -531,18 +542,18 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
             });
     if (shape != WeldShape.FLAT)
     {
-            skArc(sketch, "arc", {
-                "start" : face1Point,
-                "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == WeldShape.CONVEX ? 1.15 : 0.75),
-                "end" : face2Point
-            });
+        skArc(sketch, "arc", {
+                    "start" : face1Point,
+                    "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == WeldShape.CONVEX ? 1.15 : 0.75),
+                    "end" : face2Point
+                });
     }
     else
     {
-            skLineSegment(sketch, "face3Line", {
-                "start" : face1Point,
-                "end" : face2Point
-            });
+        skLineSegment(sketch, "face3Line", {
+                    "start" : face1Point,
+                    "end" : face2Point
+                });
     }
     skSolve(sketch);
     toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
@@ -673,18 +684,18 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
             });
     if (shape != WeldShape.FLAT)
     {
-            skArc(sketch, "arc", {
-                "start" : face1Point,
-                "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == WeldShape.CONVEX ? 1.15 : 0.75),
-                "end" : face2Point
-            });
+        skArc(sketch, "arc", {
+                    "start" : face1Point,
+                    "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == WeldShape.CONVEX ? 1.15 : 0.75),
+                    "end" : face2Point
+                });
     }
     else
     {
-            skLineSegment(sketch, "face3Line", {
-                "start" : face1Point,
-                "end" : face2Point
-            });
+        skLineSegment(sketch, "face3Line", {
+                    "start" : face1Point,
+                    "end" : face2Point
+                });
     }
     skSolve(sketch);
     toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
@@ -1009,7 +1020,7 @@ function sketchBevelButtWeld(context is Context, definition is map, thickness is
                     "start" : vector(-distOut, -thickness + rootGapHeight),
                     "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
                 });
-                skLineSegment(profileSketch, "sideLineVertical3", {
+        skLineSegment(profileSketch, "sideLineVertical3", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(-distOut, -thickness + rootGapHeight)
                 });
@@ -1080,7 +1091,7 @@ function sketchSquareButtWeld(context is Context, definition is map, thickness i
                     "start" : vector(-distOut, -thickness + rootGapHeight),
                     "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
                 });
-                skLineSegment(profileSketch, "sideLineVertical3", {
+        skLineSegment(profileSketch, "sideLineVertical3", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(-distOut, -thickness + rootGapHeight)
                 });
