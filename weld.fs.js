@@ -282,7 +282,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         {
             filletWeld(context, id, definition, toDelete);
         }
-        else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
+        else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD || definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
         {
             buttWeld(context, id, definition, toDelete);
         }
@@ -336,6 +336,10 @@ export function CodeELWeld(context is Context, id is Id, oldDefinition is map, d
         if (definition.weldType == WeldType.V_BUTT_WELD)
         {
             definition.weldType2 = WeldType2.V_BUTT_WELD;
+        }
+        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.BEVEL_BUTT_WELD;
         }
         else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
         {
@@ -825,6 +829,8 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         // Create each weldtype sketch
         if (definition.weldType == WeldType.V_BUTT_WELD)
             sketchVButtWeld(context, definition, thickness, profileSketch);
+        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+            sketchBevelButtWeld(context, definition, thickness, profileSketch);
         else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
             sketchSquareButtWeld(context, definition, thickness, profileSketch);
         else if (definition.weldType == WeldType.U_BUTT_WELD)
@@ -920,6 +926,75 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
                     "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
                 });
     }
+    else
+    {
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+    }
+}
+
+// /**
+//  * TODO: U-Butt Weld Sketch
+//  */
+function sketchBevelButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+{
+    // Obtiene la forma a aplicar a la soldadura en V
+    var shape = definition.buttShape;
+
+    // Obtiene el angulo y los valores del talon de raiz a aplicar a la soldadura en V
+    var angle = definition.buttAngle;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
+
+    // Obtiene el ancho de la parte superior de la soldadura
+    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
+
+    // Si la forma de la soldadura es plana crea una linea
+    if (shape == WeldShape.FLAT)
+        skLineSegment(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(distOut, 0 * meter)
+                });
+        // Si la forma de la soldadura No es plana, es convexa, crea un arco
+    else
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, distOut / 5),
+                    "end" : vector(distOut, 0 * meter)
+                });
+
+    // Si está activada la Soldadura con talon de raiz, crea la soldadura en V con talon de raiz
+    if (rootGap)
+    {
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLineVertical1", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineVertical2", {
+                    "start" : vector(rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+    }
+    // Si No está activada la Soldadura con talon de raiz, crea solo la soldadura en V
     else
     {
         skLineSegment(profileSketch, "sideLine1", {
@@ -1181,6 +1256,8 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
             weldTypeStr = "Fillet";
         else if (definition.weldType == WeldType.V_BUTT_WELD)
             weldTypeStr = "V-Butt";
+        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+            weldTypeStr = "Bevel Butt";
         else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
             weldTypeStr = "Square Butt";
         else if (definition.weldType == WeldType.U_BUTT_WELD)
