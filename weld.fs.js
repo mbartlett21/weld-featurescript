@@ -203,6 +203,12 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isLength(definition.buttRadius, BLEND_BOUNDS);
                 }
+                        
+                if (definition.buttShape != ButtShape.FLAT)
+                {
+                    annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.buttOffset, BLEND_BOUNDS);
+                }
 
                 annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
                 definition.buttRootGap is boolean;
