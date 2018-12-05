@@ -110,13 +110,16 @@ export enum WeldShape
  * Specifies the dimension of the Fillet welding.
  * @value SIDE : Weld side (z).
  * @value HEIGHT : Weld height (a).
+ * @value PERPENDICULAR : Perpendicular distance.
  */
 export enum FilletDimension
 {
     annotation { "Name" : "Side (z)" }
     SIDE,
     annotation { "Name" : "Height (a)" }
-    HEIGHT
+    HEIGHT,
+    annotation { "Name" : "Normal dist." }
+    PERPENDICULAR
 }
 
 /**
@@ -491,7 +494,11 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     if (definition.filletDimension == FilletDimension.HEIGHT)
     {
         size = size / cos(angle / 2.0);
-    }  
+    }
+    else if (definition.filletDimension == FilletDimension.PERPENDICULAR)
+    {
+        size = size / sin(angle);
+    }
 
     var face1Point = worldToPlane(skPlane, intersectionLine.origin + face1Dir * size);
     var face1SkDir = normalize(face1Point);
