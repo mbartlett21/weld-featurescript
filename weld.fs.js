@@ -268,7 +268,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 
                     if (definition.buttShape != WeldShape.FLAT)
                     {
-                        annotation { "Name" : "Distancia convexidad", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                        annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                         isLength(definition.buttOffset2, BLEND_BOUNDS);
                     }
 
