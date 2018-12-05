@@ -99,7 +99,7 @@ export enum WeldType2
  * @value CONCAVE : Concave.
  * @value FLAT : Flat.
  */
-export enum FilletShape
+export enum WeldShape
 {
     annotation { "Name" : "Convex" }
     CONVEX,
@@ -125,19 +125,6 @@ export enum FilletCornerShape
     NONE
 }
 
-/**
- * Specifies the shape of Butt.
- * @value CONVEX : Convex.
- * @value FLAT : Flat.
- */
-export enum ButtShape
-{
-    annotation { "Name" : "Convex" }
-    CONVEX,
-    annotation { "Name" : "Flat" }
-    FLAT
-}
-
 // Bounds and enums }
 
 annotation { "Feature Type Name" : "Weld", "Editing Logic Function" : "CodeELWeld" }
@@ -161,10 +148,16 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 definition.filletEntities2 is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-                definition.filletShape is FilletShape;
+                definition.filletShape is WeldShape;
 
                 annotation { "Name" : "Weld size", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                 isLength(definition.filletSize, BLEND_BOUNDS);
+                        
+                if (definition.filletShape != WeldShape.FLAT)
+                {
+                    annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.filletOffset, BLEND_BOUNDS);
+                }
 
                 annotation { "Name" : "Tangent propagation" }
                 definition.filletPropagation is boolean;
@@ -178,7 +171,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 definition.buttEdge is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-                definition.buttShape is ButtShape;
+                definition.buttShape is WeldShape;
 
                 if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
                 {
@@ -196,6 +189,12 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 {
                     annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isLength(definition.buttRadius, BLEND_BOUNDS);
+                }
+                        
+                if (definition.buttShape != WeldShape.FLAT)
+                {
+                    annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isLength(definition.buttOffset, BLEND_BOUNDS);
                 }
 
                 annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : true }
@@ -219,7 +218,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     definition.weldType2 is WeldType2;
 
                     annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-                    definition.buttShape2 is ButtShape;
+                    definition.buttShape2 is WeldShape;
 
                     if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
                     {
@@ -348,6 +347,12 @@ export function CodeELWeld(context is Context, id is Id, oldDefinition is map, d
             definition.weldType2 = WeldType2.J_BUTT_WELD;
         }
     }
+    
+    if (definition.filletShape != WeldShape.FLAT && !specifiedParameters.filletOffset)
+    {
+        definition.filletOffset = definition.filletSize / 5.0;
+    }
+    
     return definition;
 }
 
@@ -454,7 +459,7 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     var face2 = definition.face2;
     var face2Plane = definition.face2Def;
 
-    var shape is FilletShape = definition.filletShape;
+    var shape is WeldShape = definition.filletShape;
 
     var intersectionLine = intersection(face1Plane, face2Plane);
 
@@ -488,11 +493,11 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
                 "start" : vector(0, 0) * inch,
                 "end" : face2Point
             });
-    if (shape != FilletShape.FLAT)
+    if (shape != WeldShape.FLAT)
     {
             skArc(sketch, "arc", {
                 "start" : face1Point,
-                "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == FilletShape.CONVEX ? 1.15 : 0.75),
+                "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == WeldShape.CONVEX ? 1.15 : 0.75),
                 "end" : face2Point
             });
     }
@@ -577,7 +582,7 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
     if (face1Def is Cylinder && perpendicularVectors(face1Def.coordSystem.zAxis, face2Plane.normal))
         doSweepLine = true;
 
-    var shape is FilletShape = definition.filletShape;
+    var shape is WeldShape = definition.filletShape;
     var size = definition.filletSize;
 
     var distResult = evDistance(context, {
@@ -630,11 +635,11 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
                 "start" : vector(0, 0) * inch,
                 "end" : face2Point
             });
-    if (shape != FilletShape.FLAT)
+    if (shape != WeldShape.FLAT)
     {
             skArc(sketch, "arc", {
                 "start" : face1Point,
-                "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == FilletShape.CONVEX ? 1.15 : 0.75),
+                "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == WeldShape.CONVEX ? 1.15 : 0.75),
                 "end" : face2Point
             });
     }
@@ -880,7 +885,7 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
 
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
 
-    if (shape == ButtShape.FLAT)
+    if (shape == WeldShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
@@ -940,7 +945,7 @@ function sketchDoubleVButtWeld(context is Context, definition is map, thickness 
 
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) / 2 + rootGapWidth / 2 : tan(angle / 2) * thickness / 2;
 
-    if (shape == ButtShape.FLAT)
+    if (shape == WeldShape.FLAT)
     {
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
@@ -1024,7 +1029,7 @@ function sketchSquareButtWeld(context is Context, definition is map, thickness i
 
     var distOut = definition.buttDist / 2.0;
 
-    if (shape == ButtShape.FLAT)
+    if (shape == WeldShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
@@ -1101,7 +1106,7 @@ function sketchUButtWeld(context is Context, definition is map, thickness is Val
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
 
     // Si la forma de la soldadura es plana crea una linea
-    if (shape == ButtShape.FLAT)
+    if (shape == WeldShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
@@ -1170,7 +1175,7 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
 
     // Si la forma de la soldadura es plana crea una linea
-    if (shape == ButtShape.FLAT)
+    if (shape == WeldShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
