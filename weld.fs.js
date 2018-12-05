@@ -200,10 +200,10 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 if (definition.buttRootGap)
                 {
                     annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isLength(definition.buttRootGapWidth, SHELL_OFFSET_BOUNDS);
+                    isLength(definition.buttRootGapWidth, ZERO_INCLUSIVE_OFFSET_BOUNDS);
 
                     annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isLength(definition.buttRootGapHeight, SHELL_OFFSET_BOUNDS);
+                    isLength(definition.buttRootGapHeight, ZERO_INCLUSIVE_OFFSET_BOUNDS);
                 }
                 
                 annotation { "Name" : "Other side", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
@@ -241,10 +241,10 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     if (definition.buttRootGap2)
                     {
                         annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isLength(definition.buttRootGapWidth2, SHELL_OFFSET_BOUNDS);
+                        isLength(definition.buttRootGapWidth2, ZERO_INCLUSIVE_OFFSET_BOUNDS);
 
                         annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isLength(definition.buttRootGapHeight2, SHELL_OFFSET_BOUNDS);
+                        isLength(definition.buttRootGapHeight2, ZERO_INCLUSIVE_OFFSET_BOUNDS);
                     }
                 }
             }
