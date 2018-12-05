@@ -52,41 +52,41 @@ export enum WeldFeatureSettingsSelection
 /**
  * Specifies the type of welding.
  * @value FILLET_WELD : Fillet weld.
- * @value V_BUTT_WELD : V-Butt weld (beta).
  * @value SQUARE_BUTT_WELD : Square Butt weld.
- * @value U_BUTT_WELD : U-Butt weld (ToDo).
- * @value J_BUTT_WELD : J-Butt weld (ToDo).
+ * @value V_BUTT_WELD : V-Butt weld.
+ * @value U_BUTT_WELD : U-Butt weld.
+ * @value J_BUTT_WELD : J-Butt weld.
  */
 export enum WeldType
 {
     annotation { "Name" : "Fillet weld" }
     FILLET_WELD,
-    annotation { "Name" : "V-Butt weld" }
-    V_BUTT_WELD,
     annotation { "Name" : "Square Butt weld" }
     SQUARE_BUTT_WELD,
-    annotation { "Name" : "U-Butt weld (ToDo)" }
+    annotation { "Name" : "V-Butt weld" }
+    V_BUTT_WELD,
+    annotation { "Name" : "U-Butt weld" }
     U_BUTT_WELD,
-    annotation { "Name" : "J-Butt weld (ToDo)" }
+    annotation { "Name" : "J-Butt weld" }
     J_BUTT_WELD
 }
 
 /**
  * Specifies the type of welding.
- * @value V_BUTT_WELD : V-Butt weld (beta).
- * @value SQUARE_BUTT_WELD : Square Butt weld (ToDo).
- * @value U_BUTT_WELD : U-Butt weld (ToDo).
- * @value J_BUTT_WELD : J-Butt weld (ToDo).
+ * @value SQUARE_BUTT_WELD : Square Butt weld.
+ * @value V_BUTT_WELD : V-Butt weld.
+ * @value U_BUTT_WELD : U-Butt weld.
+ * @value J_BUTT_WELD : J-Butt weld.
  */
 export enum WeldType2
 {
-    annotation { "Name" : "V-Butt weld (beta)" }
-    V_BUTT_WELD,
-    annotation { "Name" : "Square Butt weld (ToDo)" }
+    annotation { "Name" : "Square Butt weld" }
     SQUARE_BUTT_WELD,
-    annotation { "Name" : "U-Butt weld (ToDo)" }
+    annotation { "Name" : "V-Butt weld" }
+    V_BUTT_WELD,
+    annotation { "Name" : "U-Butt weld" }
     U_BUTT_WELD,
-    annotation { "Name" : "J-Butt weld (ToDo)" }
+    annotation { "Name" : "J-Butt weld" }
     J_BUTT_WELD
 }
 
