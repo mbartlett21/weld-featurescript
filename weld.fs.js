@@ -54,6 +54,7 @@ export enum WeldFeatureSettingsSelection
  * @value FILLET_WELD : Fillet weld.
  * @value SQUARE_BUTT_WELD : Square Butt weld.
  * @value V_BUTT_WELD : V-Butt weld.
+ * @value BEVEL_BUTT_WELD : Square Butt weld.
  * @value U_BUTT_WELD : U-Butt weld.
  * @value J_BUTT_WELD : J-Butt weld.
  */
@@ -65,6 +66,8 @@ export enum WeldType
     SQUARE_BUTT_WELD,
     annotation { "Name" : "V-Butt weld" }
     V_BUTT_WELD,
+    annotation { "Name" : "Bevel Butt weld" }
+    BEVEL_BUTT_WELD,
     annotation { "Name" : "U-Butt weld" }
     U_BUTT_WELD,
     annotation { "Name" : "J-Butt weld" }
@@ -75,6 +78,7 @@ export enum WeldType
  * Specifies the type of welding.
  * @value SQUARE_BUTT_WELD : Square Butt weld.
  * @value V_BUTT_WELD : V-Butt weld.
+ * @value BEVEL_BUTT_WELD : Square Butt weld.
  * @value U_BUTT_WELD : U-Butt weld.
  * @value J_BUTT_WELD : J-Butt weld.
  */
@@ -84,6 +88,8 @@ export enum WeldType2
     SQUARE_BUTT_WELD,
     annotation { "Name" : "V-Butt weld" }
     V_BUTT_WELD,
+    annotation { "Name" : "Bevel Butt weld" }
+    BEVEL_BUTT_WELD,
     annotation { "Name" : "U-Butt weld" }
     U_BUTT_WELD,
     annotation { "Name" : "J-Butt weld" }
@@ -296,7 +302,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         {
             filletWeld(context, id, definition, toDelete);
         }
-        else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
+        else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD || definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
         {
             buttWeld(context, id, definition, toDelete);
         }
@@ -350,6 +356,10 @@ export function CodeELWeld(context is Context, id is Id, oldDefinition is map, d
         if (definition.weldType == WeldType.V_BUTT_WELD)
         {
             definition.weldType2 = WeldType2.V_BUTT_WELD;
+        }
+        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+        {
+            definition.weldType2 = WeldType2.BEVEL_BUTT_WELD;
         }
         else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
         {
@@ -848,6 +858,8 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         // Create each weldtype sketch
         if (definition.weldType == WeldType.V_BUTT_WELD)
             sketchVButtWeld(context, definition, thickness, profileSketch);
+        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+            sketchBevelButtWeld(context, definition, thickness, profileSketch);
         else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
             sketchSquareButtWeld(context, definition, thickness, profileSketch);
         else if (definition.weldType == WeldType.U_BUTT_WELD)
@@ -952,6 +964,77 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
         skLineSegment(profileSketch, "sideLine2", {
                     "start" : vector(distOut, 0 * meter),
                     "end" : vector(0 * meter, -thickness)
+                });
+    }
+}
+
+// /**
+//  * TODO: Bevel Butt Weld Sketch
+//  */
+function sketchBevelButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+{
+    var shape = definition.buttShape;
+    var rootGap = definition.buttRootGap;
+    var rootGapWidth = definition.buttRootGapWidth;
+    var rootGapHeight = definition.buttRootGapHeight;
+
+    var distOut = definition.buttDist / 2.0;
+
+    if (shape == WeldShape.FLAT)
+        skLineSegment(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    else
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, distOut / 5),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    if (rootGap)
+    {
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLineVertical1", {
+                    "start" : vector(-rootGapWidth / 2, -thickness),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineVertical2", {
+                    "start" : vector(rootGapWidth / 2, -thickness),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineHorizontal1", {
+                    "start" : vector(-distOut, -thickness + rootGapHeight),
+                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+                skLineSegment(profileSketch, "sideLineVertical3", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(-distOut, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineHorizontal2", {
+                    "start" : vector(distOut, -thickness + rootGapHeight),
+                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineVertical4", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(distOut, -thickness + rootGapHeight)
+                });
+    }
+    else
+    {
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(-distOut, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(distOut, -thickness)
+                });
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(-distOut, -thickness),
+                    "end" : vector(distOut, -thickness)
                 });
     }
 }
@@ -1204,6 +1287,8 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
             weldTypeStr = "Fillet";
         else if (definition.weldType == WeldType.V_BUTT_WELD)
             weldTypeStr = "V-Butt";
+        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+            weldTypeStr = "Bevel Butt";
         else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
             weldTypeStr = "Square Butt";
         else if (definition.weldType == WeldType.U_BUTT_WELD)
