@@ -54,6 +54,7 @@ export enum WeldFeatureSettingsSelection
  * @value FILLET_WELD : Fillet weld.
  * @value SQUARE_BUTT_WELD : Square Butt weld.
  * @value V_BUTT_WELD : V-Butt weld.
+ * @value BEVEL_BUTT_WELD : Square Butt weld.
  * @value U_BUTT_WELD : U-Butt weld.
  * @value J_BUTT_WELD : J-Butt weld.
  */
@@ -65,6 +66,8 @@ export enum WeldType
     SQUARE_BUTT_WELD,
     annotation { "Name" : "V-Butt weld" }
     V_BUTT_WELD,
+    annotation { "Name" : "Bevel Butt weld" }
+    BEVEL_BUTT_WELD,
     annotation { "Name" : "U-Butt weld" }
     U_BUTT_WELD,
     annotation { "Name" : "J-Butt weld" }
@@ -75,6 +78,7 @@ export enum WeldType
  * Specifies the type of welding.
  * @value SQUARE_BUTT_WELD : Square Butt weld.
  * @value V_BUTT_WELD : V-Butt weld.
+ * @value BEVEL_BUTT_WELD : Square Butt weld.
  * @value U_BUTT_WELD : U-Butt weld.
  * @value J_BUTT_WELD : J-Butt weld.
  */
@@ -84,6 +88,8 @@ export enum WeldType2
     SQUARE_BUTT_WELD,
     annotation { "Name" : "V-Butt weld" }
     V_BUTT_WELD,
+    annotation { "Name" : "Bevel Butt weld" }
+    BEVEL_BUTT_WELD,
     annotation { "Name" : "U-Butt weld" }
     U_BUTT_WELD,
     annotation { "Name" : "J-Butt weld" }
