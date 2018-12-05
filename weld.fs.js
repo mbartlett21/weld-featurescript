@@ -940,37 +940,28 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
 }
 
 // /**
-//  * TODO: U-Butt Weld Sketch
+//  * TODO: Bevel Butt Weld Sketch
 //  */
 function sketchBevelButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
 {
-    // Obtiene la forma a aplicar a la soldadura en V
     var shape = definition.buttShape;
-
-    // Obtiene el angulo y los valores del talon de raiz a aplicar a la soldadura en V
-    var angle = definition.buttAngle;
     var rootGap = definition.buttRootGap;
     var rootGapWidth = definition.buttRootGapWidth;
     var rootGapHeight = definition.buttRootGapHeight;
 
-    // Obtiene el ancho de la parte superior de la soldadura
-    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
+    var distOut = definition.buttDist / 2.0;
 
-    // Si la forma de la soldadura es plana crea una linea
     if (shape == WeldShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
                 });
-        // Si la forma de la soldadura No es plana, es convexa, crea un arco
     else
         skArc(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "mid" : vector(0 * meter, distOut / 5),
                     "end" : vector(distOut, 0 * meter)
                 });
-
-    // Si está activada la Soldadura con talon de raiz, crea la soldadura en V con talon de raiz
     if (rootGap)
     {
         skLineSegment(profileSketch, "bottomLine", {
@@ -985,25 +976,36 @@ function sketchBevelButtWeld(context is Context, definition is map, thickness is
                     "start" : vector(rootGapWidth / 2, -thickness),
                     "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
                 });
-        skLineSegment(profileSketch, "sideLine1", {
-                    "start" : vector(-distOut, 0 * meter),
+        skLineSegment(profileSketch, "sideLineHorizontal1", {
+                    "start" : vector(-distOut, -thickness + rootGapHeight),
                     "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
                 });
-        skLineSegment(profileSketch, "sideLine2", {
-                    "start" : vector(distOut, 0 * meter),
+                skLineSegment(profileSketch, "sideLineVertical3", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(-distOut, -thickness + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLineHorizontal2", {
+                    "start" : vector(distOut, -thickness + rootGapHeight),
                     "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
                 });
+        skLineSegment(profileSketch, "sideLineVertical4", {
+                    "start" : vector(distOut, 0 * meter),
+                    "end" : vector(distOut, -thickness + rootGapHeight)
+                });
     }
-    // Si No está activada la Soldadura con talon de raiz, crea solo la soldadura en V
     else
     {
         skLineSegment(profileSketch, "sideLine1", {
                     "start" : vector(-distOut, 0 * meter),
-                    "end" : vector(0 * meter, -thickness)
+                    "end" : vector(-distOut, -thickness)
                 });
         skLineSegment(profileSketch, "sideLine2", {
                     "start" : vector(distOut, 0 * meter),
-                    "end" : vector(0 * meter, -thickness)
+                    "end" : vector(distOut, -thickness)
+                });
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(-distOut, -thickness),
+                    "end" : vector(distOut, -thickness)
                 });
     }
 }
