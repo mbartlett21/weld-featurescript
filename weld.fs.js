@@ -741,13 +741,13 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
 
     // Replace faces
     if (evaluateQuery(context, weldFace1) != [])
-        try(opReplaceFace(context, id + "replaceFace1", {
+        try silent(opReplaceFace(context, id + "replaceFace1", {
                         "replaceFaces" : weldFace1,
                         "templateFace" : face1,
                         "oppositeSense" : true
                     }));
     if (evaluateQuery(context, weldFace2) != [])
-        try(opReplaceFace(context, id + "replaceFace2", {
+        try silent(opReplaceFace(context, id + "replaceFace2", {
                         "replaceFaces" : weldFace2,
                         "templateFace" : face2,
                         "oppositeSense" : true
