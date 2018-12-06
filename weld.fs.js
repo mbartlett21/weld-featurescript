@@ -567,6 +567,7 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
             
     skSolve(sketch);
     toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
+    var fromFace3Line = startTracking(context, id + "sketch", "face3Line");
 
     // Sketch face
     var sketchFace = qCreatedBy(id + "sketch", EntityType.FACE);
@@ -605,6 +606,7 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     // Extend faces to part again
     var faceQ1 = qParallelPlanes(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), -face1Plane.normal, false);
     var faceQ2 = qParallelPlanes(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), -face2Plane.normal, false);
+    var facesQ = qUnion([faceQ1, faceQ2, fromFace3Line]);
     if (evaluateQuery(context, faceQ1) != [])
         opReplaceFace(context, subId + "replaceFace1", {
                     "replaceFaces" : faceQ1,
@@ -621,7 +623,7 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     // Endfaces for rounded ends
     endFaces[] = append(endFaces[], qSubtraction(
                 qGeometry(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), GeometryType.PLANE),
-                qUnion([faceQ1, faceQ2])
+                facesQ
             ));
 
     return qCreatedBy(subId + "booleanCut", EntityType.BODY);
