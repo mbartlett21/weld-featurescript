@@ -443,6 +443,7 @@ function filletWeld(context is Context, id is Id, definition is map, toDelete is
                     "filletShape" : definition.filletShape,
                     "filletDimension" : definition.filletDimension,
                     "filletSize" : definition.filletSize,
+                    "filletOffset" : definition.filletOffset,
                     "filletPropagation" : definition.filletPropagation
                 };
                 setExternalDisambiguation(context, filletId, filletDef.face1);
@@ -540,21 +541,30 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
                 "start" : vector(0, 0) * inch,
                 "end" : face2Point
             });
-    if (shape != WeldShape.FLAT)
-    {
-        skArc(sketch, "arc", {
-                    "start" : face1Point,
-                    "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == WeldShape.CONVEX ? 1.15 : 0.75),
-                    "end" : face2Point
-                });
-    }
-    else
+    if (shape == WeldShape.FLAT)
     {
         skLineSegment(sketch, "face3Line", {
                     "start" : face1Point,
                     "end" : face2Point
                 });
     }
+    else if (shape == WeldShape.CONVEX)
+    {
+                skArc(sketch, "arc", {
+                    "start" : face1Point,
+                    "mid" : normalize(face1SkDir + face2SkDir) * (dist +  definition.filletOffset),
+                    "end" : face2Point
+                });
+    }
+    else
+    {
+                skArc(sketch, "arc", {
+                    "start" : face1Point,
+                    "mid" : normalize(face1SkDir + face2SkDir) * (dist -  definition.filletOffset),
+                    "end" : face2Point
+                });
+    }
+            
     skSolve(sketch);
     toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
 
