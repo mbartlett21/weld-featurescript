@@ -640,7 +640,6 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
         doSweepLine = true;
 
     var shape is WeldShape = definition.filletShape;
-    var size = definition.filletSize;
 
     var distResult = evDistance(context, {
             "side0" : face1,
@@ -671,14 +670,26 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
 
     var skPlane = plane(project(intersectionLine, distResult.sides[0].point), intersectionLine.direction);
     var face1Dir = cross(skPlane.normal, face1Plane.normal);
+    var face2Dir = -cross(skPlane.normal, face2Plane.normal);
+            
+    var angle = angleBetween(face1Dir, face2Dir);
+            
+    var size = definition.filletSize;
+    if (definition.filletDimension == FilletDimension.HEIGHT)
+    {
+        size = size / cos(angle / 2.0);
+    }
+    else if (definition.filletDimension == FilletDimension.PERPENDICULAR)
+    {
+        size = size / sin(angle);
+    }
+            
     var face1Point = worldToPlane(skPlane, intersectionLine.origin + face1Dir * size);
     var face1SkDir = normalize(face1Point);
 
-    var face2Dir = -cross(skPlane.normal, face2Plane.normal);
     var face2Point = worldToPlane(skPlane, intersectionLine.origin + face2Dir * size);
     var face2SkDir = normalize(face2Point);
 
-    var angle = angleBetween(face1Dir, face2Dir);
     var dist = size * cos(angle / 2); // Distance of a straight line out
     // Sketch
     var sketch = newSketchOnPlane(context, id + "sketch", {
@@ -692,21 +703,29 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
                 "start" : vector(0, 0) * inch,
                 "end" : face2Point
             });
-    if (shape != WeldShape.FLAT)
-    {
-        skArc(sketch, "arc", {
-                    "start" : face1Point,
-                    "mid" : normalize(face1SkDir + face2SkDir) * dist * (shape == WeldShape.CONVEX ? 1.15 : 0.75),
-                    "end" : face2Point
-                });
-    }
-    else
+    if (shape == WeldShape.FLAT)
     {
         skLineSegment(sketch, "face3Line", {
                     "start" : face1Point,
                     "end" : face2Point
                 });
     }
+    else if (shape == WeldShape.CONVEX)
+    {
+        skArc(sketch, "arc", {
+                    "start" : face1Point,
+                    "mid" : normalize(face1SkDir + face2SkDir) * (dist + definition.filletOffset),
+                    "end" : face2Point
+                });
+    }
+    else
+    {
+        skArc(sketch, "arc", {
+                    "start" : face1Point,
+                    "mid" : normalize(face1SkDir + face2SkDir) * (dist - definition.filletOffset),
+                    "end" : face2Point
+                });
+    } 
     skSolve(sketch);
     toDelete[] = append(toDelete[], qCreatedBy(id + "sketch"));
 
