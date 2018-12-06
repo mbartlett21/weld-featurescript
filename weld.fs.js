@@ -595,6 +595,13 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     // Extend faces to part again
     var faceQ1 = qParallelPlanes(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), -face1Plane.normal, false);
     var faceQ2 = qParallelPlanes(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), -face2Plane.normal, false);
+    var facesQ = qUnion([faceQ1, faceQ2]);
+    if (shape == WeldShape.FLAT)
+    {
+        var faceQ3Dir = cross(skPlane.normal, normalize((intersectionLine.origin + face2Dir * size) - (intersectionLine.origin + face1Dir * size)));
+        var faceQ3 = qParallelPlanes(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), faceQ3Dir, false);
+        facesQ = qUnion([facesQ, faceQ3]);
+    }
     if (evaluateQuery(context, faceQ1) != [])
         opReplaceFace(context, subId + "replaceFace1", {
                     "replaceFaces" : faceQ1,
@@ -611,7 +618,7 @@ function filletWeldPlanar(context is Context, id is Id, definition is map, toDel
     // Endfaces for rounded ends
     endFaces[] = append(endFaces[], qSubtraction(
                 qGeometry(qOwnedByBody(qOwnerBody(qUnion([qCreatedBy(subId + "extrude1", EntityType.FACE), qCreatedBy(subId + "extrude2", EntityType.FACE)])), EntityType.FACE), GeometryType.PLANE),
-                qUnion([faceQ1, faceQ2])
+                facesQ
             ));
 
     return qCreatedBy(subId + "booleanCut", EntityType.BODY);
