@@ -874,6 +874,10 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         var thickness = evLength(context, {
                 "entities" : thicknessEdge
             });
+        if (definition.buttOtherSide)
+        {
+            thickness = thickness / 2.0;
+        }
 
         // Sketch x axis
         var xAxis = extractDirection(context, face1);
