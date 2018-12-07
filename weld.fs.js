@@ -160,10 +160,10 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 
             if (definition.weldType == WeldType.FILLET_WELD)
             {
-                annotation { "Name" : "Side 1", "Filter" : EntityType.FACE }
+                annotation { "Name" : "Face in Side 1", "Filter" : EntityType.FACE, "MaxNumberOfPicks" : 1 }
                 definition.filletEntities1 is Query;
 
-                annotation { "Name" : "Side 2", "Filter" : EntityType.FACE }
+                annotation { "Name" : "Faces in Side 2", "Filter" : EntityType.FACE }
                 definition.filletEntities2 is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
