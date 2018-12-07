@@ -950,7 +950,57 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
         // Extrude the second time for the part
         opExtrude(context, subId + "extrude2", extrudeDef);
-        setWeldNumbers(context, definition, qCreatedBy(subId + "extrude2", EntityType.BODY));
+                
+        if (definition.buttOtherSide)
+        {
+            var skPlaneB = plane(skPlane.origin + thickness * 2.0 * extractDirection(context, thicknessEdge), edge1Line.direction, -xAxis);
+            var profileSketchB = newSketchOnPlane(context, subId + "profileSketchB", {
+                    "sketchPlane" : skPlaneB
+                });
+
+            if (definition.weldType2 == WeldType2.V_BUTT_WELD)
+                sketchVButtWeld(context, definition, thickness, profileSketchB);
+            else if (definition.weldType2 == WeldType2.BEVEL_BUTT_WELD)
+                sketchBevelButtWeld(context, definition, thickness, profileSketchB);
+            else if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
+                sketchSquareButtWeld(context, definition, thickness, profileSketchB);
+            else if (definition.weldType2 == WeldType2.U_BUTT_WELD)
+                sketchUButtWeld(context, definition, thickness, profileSketchB);
+            else if (definition.weldType2 == WeldType2.J_BUTT_WELD)
+                sketchJButtWeld(context, definition, thickness, profileSketchB);
+
+            skSolve(profileSketchB);
+
+            toDelete[] = append(toDelete[], qCreatedBy(subId + "profileSketchB"));
+
+            var extrudeDef = {
+                "entities" : qCreatedBy(subId + "profileSketchB", EntityType.FACE),
+                "direction" : skPlane.normal,
+                "endBound" : BoundingType.BLIND,
+                "endDepth" : max(face1Box.maxCorner[2], face2Box.maxCorner[2]),
+                "startBound" : BoundingType.BLIND,
+                "startDepth" : max(-face1Box.minCorner[2], -face2Box.minCorner[2]),
+            };
+
+            opExtrude(context, subId + "extrude1B", extrudeDef);
+
+            opBoolean(context, subId + "booleanB", {
+                        "tools" : qCreatedBy(subId + "extrude1B", EntityType.BODY),
+                        "targets" : qUnion([part1, part2]),
+                        "operationType" : BooleanOperationType.SUBTRACTION
+                    });
+
+            opExtrude(context, subId + "extrude2B", extrudeDef);
+            opBoolean(context, subId + "booleanAB", {
+                        "tools" : qUnion([qCreatedBy(subId + "extrude2", EntityType.BODY), qCreatedBy(subId + "extrude2B", EntityType.BODY)]),
+                        "operationType" : BooleanOperationType.UNION
+                    });
+            setWeldNumbers(context, definition, qUnion([qCreatedBy(subId + "extrude2", EntityType.BODY), qCreatedBy(subId + "extrude2B", EntityType.BODY)]));
+        }
+        else
+        {   
+            setWeldNumbers(context, definition, qCreatedBy(subId + "extrude2", EntityType.BODY));
+        }
     }
 }
 
