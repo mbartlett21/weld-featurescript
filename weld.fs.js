@@ -965,7 +965,7 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
     var rootGapWidth = definition.buttRootGapWidth;
     var rootGapHeight = definition.buttRootGapHeight;
 
-    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
+    var distOut = rootGap ? tan(angle) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle) * thickness;
 
     if (shape == WeldShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
