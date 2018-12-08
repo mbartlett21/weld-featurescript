@@ -968,6 +968,16 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
     var rootGap = definition.buttRootGap;
     var rootGapWidth = definition.buttRootGapWidth;
     var rootGapHeight = definition.buttRootGapHeight;
+            
+    if (side2)
+    {
+        shape = definition.buttShape2;
+        offset = definition.buttOffset2;
+        angle = definition.buttAngle2;
+        rootGap = definition.buttRootGap2;
+        rootGapWidth = definition.buttRootGapWidth2;
+        rootGapHeight = definition.buttRootGapHeight2;
+    }
 
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
 
