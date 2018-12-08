@@ -1341,15 +1341,15 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
         if (definition.buttOtherSide)
         {
             if (definition.weldType2 == WeldType2.V_BUTT_WELD)
-                weldTypeStr = weldTypeStr ~ "-V-Butt";
+                weldTypeStr = weldTypeStr ~ "/V-Butt";
             else if (definition.weldType2 == WeldType2.BEVEL_BUTT_WELD)
-                weldTypeStr = weldTypeStr ~ "-Bevel Butt";
+                weldTypeStr = weldTypeStr ~ "/Bevel Butt";
             else if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
-                weldTypeStr = weldTypeStr ~ "-Square Butt";
+                weldTypeStr = weldTypeStr ~ "/Square Butt";
             else if (definition.weldType2 == WeldType2.U_BUTT_WELD)
-                weldTypeStr = weldTypeStr ~ "-U-Butt";
+                weldTypeStr = weldTypeStr ~ "/U-Butt";
             else if (definition.weldType2 == WeldType2.J_BUTT_WELD)
-                weldTypeStr = weldTypeStr ~ "-J-Butt";
+                weldTypeStr = weldTypeStr ~ "/J-Butt";
         }
                 
         setProperty(context, {
