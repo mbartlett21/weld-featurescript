@@ -963,6 +963,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
 function sketchVButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
 {
     var shape = definition.buttShape;
+    var offset = definition.buttOffset;
     var angle = definition.buttAngle;
     var rootGap = definition.buttRootGap;
     var rootGapWidth = definition.buttRootGapWidth;
@@ -971,16 +972,29 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
     var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
 
     if (shape == WeldShape.FLAT)
+    {
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
                 });
-    else
+    }
+    else if (shape == WeldShape.CONVEX)
+    {
         skArc(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
-                    "mid" : vector(0 * meter, distOut / 5),
+                    "mid" : vector(0 * meter, offset),
                     "end" : vector(distOut, 0 * meter)
                 });
+    }
+    else
+    {
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, -offset),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    }
+            
     if (rootGap)
     {
         skLineSegment(profileSketch, "bottomLine", {
