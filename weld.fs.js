@@ -990,7 +990,9 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
                         "targets" : qUnion([part1, part2]),
                         "operationType" : BooleanOperationType.SUBTRACTION
                     });
-
+            extrudeDef.endDepth = min(face1Box.maxCorner[2], face2Box.maxCorner[2]);
+            extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
+                    
             opExtrude(context, subId + "extrude2B", extrudeDef);
 
             opBoolean(context, subId + "booleanAB", {
