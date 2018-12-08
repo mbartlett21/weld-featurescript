@@ -899,15 +899,15 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
 
         // Create each weldtype sketch
         if (definition.weldType == WeldType.V_BUTT_WELD)
-            sketchVButtWeld(context, definition, thickness, profileSketch);
+            sketchVButtWeld(context, definition, thickness, profileSketch, false);
         else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
-            sketchBevelButtWeld(context, definition, thickness, profileSketch);
+            sketchBevelButtWeld(context, definition, thickness, profileSketch, false);
         else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
-            sketchSquareButtWeld(context, definition, thickness, profileSketch);
+            sketchSquareButtWeld(context, definition, thickness, profileSketch, false);
         else if (definition.weldType == WeldType.U_BUTT_WELD)
-            sketchUButtWeld(context, definition, thickness, profileSketch);
+            sketchUButtWeld(context, definition, thickness, profileSketch, false);
         else if (definition.weldType == WeldType.J_BUTT_WELD)
-            sketchJButtWeld(context, definition, thickness, profileSketch);
+            sketchJButtWeld(context, definition, thickness, profileSketch, false);
 
         skSolve(profileSketch);
 
@@ -960,7 +960,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
 // /**
 //  *  V-Butt Weld Sketch
 //  */
-function sketchVButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+function sketchVButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
 {
     var shape = definition.buttShape;
     var offset = definition.buttOffset;
@@ -1034,7 +1034,7 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
 // /**
 //  * TODO: Bevel Butt Weld Sketch
 //  */
-function sketchBevelButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+function sketchBevelButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
 {
     var shape = definition.buttShape;
     var rootGap = definition.buttRootGap;
@@ -1105,7 +1105,7 @@ function sketchBevelButtWeld(context is Context, definition is map, thickness is
 // /**
 //  * TODO: Square Butt Weld Sketch
 //  */
-function sketchSquareButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+function sketchSquareButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
 {
     var shape = definition.buttShape;
     var rootGap = definition.buttRootGap;
@@ -1176,7 +1176,7 @@ function sketchSquareButtWeld(context is Context, definition is map, thickness i
 // /**
 //  * TODO: U-Butt Weld Sketch
 //  */
-function sketchUButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+function sketchUButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
 {
     // Obtiene la forma a aplicar a la soldadura en V
     var shape = definition.buttShape;
@@ -1245,7 +1245,7 @@ function sketchUButtWeld(context is Context, definition is map, thickness is Val
 // /**
 //  * TODO: J-Butt Weld Sketch
 //  */
-function sketchJButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
+function sketchJButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
 {
     // Obtiene la forma a aplicar a la soldadura en V
     var shape = definition.buttShape;
