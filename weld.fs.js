@@ -912,6 +912,8 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         skSolve(profileSketch);
 
         toDelete[] = append(toDelete[], qCreatedBy(subId + "profileSketch"));
+                
+        var fromTopLine = startTracking(context, subId + "profileSketch", "topLine");
 
         // Finding extrude amounts
         var skCSys = planeToCSys(skPlane);
@@ -936,6 +938,11 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
 
         // Extrude the first time to boolean
         opExtrude(context, subId + "extrude1", extrudeDef);
+        opReplaceFace(context, subId + "replaceFace1", {
+                    "replaceFaces" : qSubtraction(fromTopLine, qEverything(EntityType.EDGE)),
+                    "templateFace" : qSubtraction(qUnion(faces1), face1),
+                // "oppositeSense" : true
+                });
         opBoolean(context, subId + "boolean", {
                     "tools" : qCreatedBy(subId + "extrude1", EntityType.BODY),
                     "targets" : qUnion([part1, part2]),
