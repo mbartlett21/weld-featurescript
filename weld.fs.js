@@ -953,7 +953,6 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         extrudeDef.startDepth = min(-face1Box.minCorner[2], -face2Box.minCorner[2]);
         // Extrude the second time for the part
         opExtrude(context, subId + "extrude2", extrudeDef);
-        setWeldNumbers(context, definition, qCreatedBy(subId + "extrude2", EntityType.BODY));
                 
         if (definition.buttOtherSide)
         {
@@ -998,7 +997,11 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
                         "tools" : qUnion([qCreatedBy(subId + "extrude2", EntityType.BODY), qCreatedBy(subId + "extrude2B", EntityType.BODY)]),
                         "operationType" : BooleanOperationType.UNION
                     });
-            setWeldNumbers(context, definition, qCreatedBy(subId + "extrude2B", EntityType.BODY));
+            setWeldNumbers(context, definition, qUnion([qCreatedBy(subId + "extrude2", EntityType.BODY), qCreatedBy(subId + "extrude2B", EntityType.BODY)]));
+        }
+        else
+        {
+            setWeldNumbers(context, definition, qCreatedBy(subId + "extrude2", EntityType.BODY));
         }
     }
 }
