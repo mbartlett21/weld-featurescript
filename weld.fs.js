@@ -81,6 +81,7 @@ export enum WeldType
  * @value BEVEL_BUTT_WELD : Square Butt weld.
  * @value U_BUTT_WELD : U-Butt weld.
  * @value J_BUTT_WELD : J-Butt weld.
+ * @value NONE_BUTT_WELD : None.
  */
 export enum WeldType2
 {
@@ -93,7 +94,9 @@ export enum WeldType2
     annotation { "Name" : "U-Butt weld" }
     U_BUTT_WELD,
     annotation { "Name" : "J-Butt weld" }
-    J_BUTT_WELD
+    J_BUTT_WELD,
+    annotation { "Name" : "None" }
+    NONE_BUTT_WELD
 }
 
 /**
@@ -241,47 +244,51 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 {
                     annotation { "Name" : "Weld Type", "UIHint" : "SHOW_LABEL" }
                     definition.weldType2 is WeldType2;
-
-                    annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
-                    definition.buttShape2 is WeldShape;
-
-                    if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
+                            
+                    if (definition.weldType2 != WeldType2.NONE_BUTT_WELD)
                     {
-                        annotation { "Name" : "Distance", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isLength(definition.buttDist2, BLEND_BOUNDS);
-                    }
 
-                    annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                    isAngle(definition.buttAngle2, ANGLE_STRICT_90_BOUNDS);
+                        annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
+                        definition.buttShape2 is WeldShape;
 
-                    if (definition.weldType2 == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
-                    {
-                        annotation { "Name" : "Opposite direction", "UIHint" : "OPPOSITE_DIRECTION" }
-                        definition.oppositeDirection2 is boolean;
-                    }
+                        if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
+                        {
+                            annotation { "Name" : "Distance", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                            isLength(definition.buttDist2, BLEND_BOUNDS);
+                        }
 
-                    if (definition.weldType2 == WeldType2.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
-                    {
-                        annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isLength(definition.buttRadius2, BLEND_BOUNDS);
-                    }
+                        annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                        isAngle(definition.buttAngle2, ANGLE_STRICT_90_BOUNDS);
 
-                    if (definition.buttShape != WeldShape.FLAT)
-                    {
-                        annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isLength(definition.buttOffset2, BLEND_BOUNDS);
-                    }
+                        if (definition.weldType2 == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
+                        {
+                                    annotation { "Name" : "Opposite direction", "UIHint" : "OPPOSITE_DIRECTION" }
+                                    definition.oppositeDirection2 is boolean;
+                        }
 
-                    annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
-                    definition.buttRootGap2 is boolean;
+                        if (definition.weldType2 == WeldType2.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
+                        {
+                                    annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                                    isLength(definition.buttRadius2, BLEND_BOUNDS);
+                        }
 
-                    if (definition.buttRootGap2)
-                    {
-                        annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isLength(definition.buttRootGapWidth2, ZERO_INCLUSIVE_OFFSET_BOUNDS);
+                        if (definition.buttShape != WeldShape.FLAT)
+                        {
+                                    annotation { "Name" : "Convexity offset", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                                    isLength(definition.buttOffset2, BLEND_BOUNDS);
+                        }
 
-                        annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isLength(definition.buttRootGapHeight2, ZERO_INCLUSIVE_OFFSET_BOUNDS);
+                        annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
+                        definition.buttRootGap2 is boolean;
+
+                        if (definition.buttRootGap2)
+                        {
+                                    annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                                    isLength(definition.buttRootGapWidth2, ZERO_INCLUSIVE_OFFSET_BOUNDS);
+
+                                    annotation { "Name" : "Root height", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                                    isLength(definition.buttRootGapHeight2, ZERO_INCLUSIVE_OFFSET_BOUNDS);
+                        }
                     }
                 }
             }
@@ -954,7 +961,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         // Extrude the second time for the part
         opExtrude(context, subId + "extrude2", extrudeDef);
                 
-        if (definition.buttOtherSide)
+        if (definition.buttOtherSide && definition.weldType2 != WeldType2.NONE_BUTT_WELD)
         {
             var skPlaneB = plane(skPlane.origin + thickness * 2.0 * extractDirection(context, thicknessEdge), edge1Line.direction, -xAxis);
             var profileSketchB = newSketchOnPlane(context, subId + "profileSketchB", {
