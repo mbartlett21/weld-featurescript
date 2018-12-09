@@ -1314,70 +1314,101 @@ function sketchUButtWeld(context is Context, definition is map, thickness is Val
 }
 
 // /**
-//  * TODO: J-Butt Weld Sketch
+//  * J-Butt Weld Sketch
 //  */
 function sketchJButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
 {
-    // Obtiene la forma a aplicar a la soldadura en V
     var shape = definition.buttShape;
-
-    // Obtiene el angulo y los valores del talon de raiz a aplicar a la soldadura en V
+    var offset = definition.buttOffset;
+    var radius = definition.buttRadius;
     var angle = definition.buttAngle;
     var rootGap = definition.buttRootGap;
     var rootGapWidth = definition.buttRootGapWidth;
     var rootGapHeight = definition.buttRootGapHeight;
 
-    // Obtiene el ancho de la parte superior de la soldadura
-    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
-
-    // Si la forma de la soldadura es plana crea una linea
-    if (shape == WeldShape.FLAT)
-        skLineSegment(profileSketch, "topLine", {
-                    "start" : vector(-distOut, 0 * meter),
-                    "end" : vector(distOut, 0 * meter)
-                });
-        // Si la forma de la soldadura No es plana, es convexa, crea un arco
-    else
-        skArc(profileSketch, "topLine", {
-                    "start" : vector(-distOut, 0 * meter),
-                    "mid" : vector(0 * meter, distOut / 5),
-                    "end" : vector(distOut, 0 * meter)
-                });
-
-    // Si está activada la Soldadura con talon de raiz, crea la soldadura en V con talon de raiz
+    if (side2)
+    {
+        shape = definition.buttShape2;
+        offset = definition.buttOffset2;
+        radius = definition.buttRadius2;
+        angle = definition.buttAngle2;
+        rootGap = definition.buttRootGap2;
+        rootGapWidth = definition.buttRootGapWidth2;
+        rootGapHeight = definition.buttRootGapHeight2;
+    }
+            
+    var ang1 = (-angle - (((90 * degree) - angle) / 2.0));
+    var distBase = thickness - radius - (radius * sin(-angle));
+    var distOut = (radius * cos(-angle)) + (distBase * tan(angle));
     if (rootGap)
     {
-        skLineSegment(profileSketch, "bottomLine", {
-                    "start" : vector(-rootGapWidth / 2, -thickness),
-                    "end" : vector(rootGapWidth / 2, -thickness)
-                });
-        skLineSegment(profileSketch, "sideLineVertical1", {
-                    "start" : vector(-rootGapWidth / 2, -thickness),
-                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
-                });
-        skLineSegment(profileSketch, "sideLineVertical2", {
-                    "start" : vector(rootGapWidth / 2, -thickness),
-                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
-                });
-        skLineSegment(profileSketch, "sideLine1", {
-                    "start" : vector(-distOut, 0 * meter),
-                    "end" : vector(-rootGapWidth / 2, -thickness + rootGapHeight)
-                });
-        skLineSegment(profileSketch, "sideLine2", {
-                    "start" : vector(distOut, 0 * meter),
-                    "end" : vector(rootGapWidth / 2, -thickness + rootGapHeight)
+        distOut = (radius * cos(-angle)) + (distBase - rootGapHeight) * tan(angle) + rootGapWidth;
+    }
+
+    if (shape == WeldShape.FLAT)
+    {
+        skLineSegment(profileSketch, "topLine", {
+                    "start" : vector(0 * meter, 0 * meter),
+                    "end" : vector(distOut, 0 * meter)
                 });
     }
-    // Si No está activada la Soldadura con talon de raiz, crea solo la soldadura en V
+    else if (shape == WeldShape.CONVEX)
+    {
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(0 * meter, 0 * meter),
+                    "mid" : vector(distOut / 2.0, offset),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    }
+    // Si la forma es Concava crea un arco restando el Offset
+    else
+    {
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(0 * meter, 0 * meter),
+                    "mid" : vector(distOut / 2.0, -offset),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    }
+
+    if (rootGap)
+    {
+        skLineSegment(profileSketch, "sideLine1", {
+                    "start" : vector(0 * meter, 0 * meter),
+                    "end" : vector(0 * meter, -thickness)
+                });
+        skLineSegment(profileSketch, "bottomLine", {
+                    "start" : vector(0 * meter, -thickness),
+                    "end" : vector(rootGapWidth, -thickness)
+                });
+        skLineSegment(profileSketch, "sideLineVertical1", {
+                    "start" : vector(rootGapWidth, -thickness),
+                    "end" : vector(rootGapWidth, -thickness + rootGapHeight)
+                });
+        skArc(profileSketch, "bottomArc1", {
+                    "start" : vector(rootGapWidth, -thickness + rootGapHeight),
+                    "mid" : vector(rootGapWidth + radius * cos(ang1), -thickness + radius + (radius * sin(ang1)) + rootGapHeight),
+                    "end" : vector(rootGapWidth + radius * cos(-angle), -thickness + radius + (radius * sin(-angle)) + rootGapHeight)
+                });
+        skLineSegment(profileSketch, "sideLine2", {
+                    "start" : vector(rootGapWidth + radius * cos(-angle), -thickness + radius + (radius * sin(-angle)) + rootGapHeight),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    }
     else
     {
         skLineSegment(profileSketch, "sideLine1", {
-                    "start" : vector(-distOut, 0 * meter),
+                    "start" : vector(0 * meter, 0 * meter),
                     "end" : vector(0 * meter, -thickness)
                 });
+        skArc(profileSketch, "bottomArc1", {
+                    "start" : vector(0 * meter, -thickness),
+                    "mid" : vector(radius * cos(ang1), -thickness + radius + (radius * sin(ang1))),
+                    "end" : vector(radius * cos(-angle), -thickness + radius + (radius * sin(-angle)))
+                });
+
         skLineSegment(profileSketch, "sideLine2", {
-                    "start" : vector(distOut, 0 * meter),
-                    "end" : vector(0 * meter, -thickness)
+                    "start" : vector(radius * cos(-angle), -thickness + radius + (radius * sin(-angle))),
+                    "end" : vector(distOut, 0 * meter)
                 });
     }
 }
