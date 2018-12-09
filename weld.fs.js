@@ -877,6 +877,9 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
 
         // Sketch x axis
         var xAxis = extractDirection(context, face1);
+                
+        // Sketch
+        var skPlane = plane(edge1Line.origin, edge1Line.direction, xAxis);
 
         // Extend faces and remove weld gap
         var distanceToExtend = 0.0 * meter;
@@ -887,11 +890,8 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
                         "moveFaces" : qUnion([face1, face2]),
                         "offsetDistance" : distanceToExtend
                     });
+            skPlane.origin = project(evPlane(context, {"face" : face1}), skPlane.origin);
         }
-
-        // Sketch
-        var skPlane = plane(edge1Line.origin, edge1Line.direction, xAxis);
-        skPlane.origin = project(skPlane, (edge1Line.origin + edge2Line.origin) / 2);
 
         var profileSketch = newSketchOnPlane(context, subId + "profileSketch", {
                 "sketchPlane" : skPlane
