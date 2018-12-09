@@ -1033,7 +1033,12 @@ function sketchBevelButtWeld(context is Context, definition is map, thickness is
     }
 
     var distOut = rootGap ? tan(angle) * (thickness - rootGapHeight) + rootGapWidth : tan(angle) * thickness;
-
+    if (side2 && definition.oppositeDirection2 || !side2 && definition.oppositeDirection)
+    {
+        distOut = -distOut;
+        rootGapWidth = -rootGapWidth;
+    }
+            
     if (shape == WeldShape.FLAT)
     {
         skLineSegment(profileSketch, "topLine", {
