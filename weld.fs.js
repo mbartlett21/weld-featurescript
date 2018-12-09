@@ -890,7 +890,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
                         "moveFaces" : qUnion([face1, face2]),
                         "offsetDistance" : distanceToExtend
                     });
-            skPlane.origin = project(evPlane(context, {"face" : face1}), skPlane.origin);
+            skPlane.origin = evEdgeTangentLine(context, {"edge" : edge1, "parameter" : 0.5}).origin;
         }
 
         var profileSketch = newSketchOnPlane(context, subId + "profileSketch", {
