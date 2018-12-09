@@ -201,7 +201,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     isLength(definition.buttDist, BLEND_BOUNDS);
                 }
 
-                annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                annotation { "Name" : "Bevel angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                 isAngle(definition.buttAngle, ANGLE_STRICT_90_BOUNDS);
 
                 if (definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
@@ -251,7 +251,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                         isLength(definition.buttDist2, BLEND_BOUNDS);
                     }
 
-                    annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    annotation { "Name" : "Bevel angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isAngle(definition.buttAngle2, ANGLE_STRICT_90_BOUNDS);
 
                     if (definition.weldType2 == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
@@ -874,6 +874,10 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         var thickness = evLength(context, {
                 "entities" : thicknessEdge
             });
+        if (definition.buttOtherSide)
+        {
+            thickness = thickness / 2.0;
+        }
 
         // Sketch x axis
         var xAxis = extractDirection(context, face1);
@@ -961,7 +965,7 @@ function sketchVButtWeld(context is Context, definition is map, thickness is Val
     var rootGapWidth = definition.buttRootGapWidth;
     var rootGapHeight = definition.buttRootGapHeight;
 
-    var distOut = rootGap ? tan(angle / 2) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle / 2) * thickness;
+    var distOut = rootGap ? tan(angle) * (thickness - rootGapHeight) + rootGapWidth / 2 : tan(angle) * thickness;
 
     if (shape == WeldShape.FLAT)
         skLineSegment(profileSketch, "topLine", {
