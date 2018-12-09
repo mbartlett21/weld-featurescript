@@ -254,13 +254,13 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     annotation { "Name" : "Bevel angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isAngle(definition.buttAngle2, ANGLE_STRICT_90_BOUNDS);
 
-                    if (definition.weldType2 == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
+                    if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD || definition.weldType2 == WeldType2.J_BUTT_WELD || definition.weldType2 == WeldType2.BEVEL_BUTT_WELD)
                     {
                         annotation { "Name" : "Opposite direction", "UIHint" : "OPPOSITE_DIRECTION" }
                         definition.oppositeDirection2 is boolean;
                     }
 
-                    if (definition.weldType2 == WeldType2.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
+                    if (definition.weldType2 == WeldType2.U_BUTT_WELD || definition.weldType2 == WeldType2.J_BUTT_WELD)
                     {
                         annotation { "Name" : "Radius", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                         isLength(definition.buttRadius2, BLEND_BOUNDS);
