@@ -1344,6 +1344,13 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
     {
         distOut = (radius * cos(-angle)) + (distBase - rootGapHeight) * tan(angle) + rootGapWidth;
     }
+            
+    var oppDir = 1;
+    if (side2 && definition.oppositeDirection2 || !side2 && definition.oppositeDirection)
+    {
+        oppDir = -1 * oppDir;
+        distOut = -distOut;
+    }
 
     if (shape == WeldShape.FLAT)
     {
@@ -1360,7 +1367,6 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
                     "end" : vector(distOut, 0 * meter)
                 });
     }
-    // Si la forma es Concava crea un arco restando el Offset
     else
     {
         skArc(profileSketch, "topLine", {
@@ -1378,19 +1384,19 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
                 });
         skLineSegment(profileSketch, "bottomLine", {
                     "start" : vector(0 * meter, -thickness),
-                    "end" : vector(rootGapWidth, -thickness)
+                    "end" : vector(oppDir * rootGapWidth, -thickness)
                 });
         skLineSegment(profileSketch, "sideLineVertical1", {
-                    "start" : vector(rootGapWidth, -thickness),
-                    "end" : vector(rootGapWidth, -thickness + rootGapHeight)
+                    "start" : vector(oppDir * rootGapWidth, -thickness),
+                    "end" : vector(oppDir * rootGapWidth, -thickness + rootGapHeight)
                 });
         skArc(profileSketch, "bottomArc1", {
-                    "start" : vector(rootGapWidth, -thickness + rootGapHeight),
-                    "mid" : vector(rootGapWidth + radius * cos(ang1), -thickness + radius + (radius * sin(ang1)) + rootGapHeight),
-                    "end" : vector(rootGapWidth + radius * cos(-angle), -thickness + radius + (radius * sin(-angle)) + rootGapHeight)
+                    "start" : vector(oppDir * rootGapWidth, -thickness + rootGapHeight),
+                    "mid" : vector((oppDir * rootGapWidth) + (oppDir * radius * cos(ang1)), -thickness + radius + (radius * sin(ang1)) + rootGapHeight),
+                    "end" : vector((oppDir * rootGapWidth) + (oppDir * radius * cos(-angle)), -thickness + radius + (radius * sin(-angle)) + rootGapHeight)
                 });
         skLineSegment(profileSketch, "sideLine2", {
-                    "start" : vector(rootGapWidth + radius * cos(-angle), -thickness + radius + (radius * sin(-angle)) + rootGapHeight),
+                    "start" : vector((oppDir * rootGapWidth) + (oppDir * radius * cos(-angle)), -thickness + radius + (radius * sin(-angle)) + rootGapHeight),
                     "end" : vector(distOut, 0 * meter)
                 });
     }
@@ -1402,12 +1408,12 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
                 });
         skArc(profileSketch, "bottomArc1", {
                     "start" : vector(0 * meter, -thickness),
-                    "mid" : vector(radius * cos(ang1), -thickness + radius + (radius * sin(ang1))),
-                    "end" : vector(radius * cos(-angle), -thickness + radius + (radius * sin(-angle)))
+                    "mid" : vector(oppDir * radius * cos(ang1), -thickness + radius + (radius * sin(ang1))),
+                    "end" : vector(oppDir * radius * cos(-angle), -distBase)
                 });
 
         skLineSegment(profileSketch, "sideLine2", {
-                    "start" : vector(radius * cos(-angle), -thickness + radius + (radius * sin(-angle))),
+                    "start" : vector(oppDir * radius * cos(-angle), -distBase),
                     "end" : vector(distOut, 0 * meter)
                 });
     }
