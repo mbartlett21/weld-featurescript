@@ -242,7 +242,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     definition.buttRootGap is boolean;
                 }
 
-                if (definition.buttRootGap)
+                if (definition.buttRootGap && definition.weldType != WeldType.SCARF_BUTT_WELD)
                 {
                     annotation { "Name" : "Root width", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isLength(definition.buttRootGapWidth, ZERO_INCLUSIVE_OFFSET_BOUNDS);
