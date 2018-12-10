@@ -1478,7 +1478,7 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
         else if (definition.weldType == WeldType.J_BUTT_WELD)
             weldTypeStr = "J-Butt";
                 
-        if (definition.buttOtherSide)
+        if (definition.buttOtherSide && definition.weldType != WeldType.FILLET_WELD)
         {
             if (definition.weldType2 == WeldType2.V_BUTT_WELD)
                 weldTypeStr ~= "/V-Butt";
