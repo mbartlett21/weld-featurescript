@@ -24,6 +24,8 @@ import(path : "onshape/std/surfaceGeometry.fs", version : "951.0");
 import(path : "onshape/std/topologyUtils.fs", version : "951.0");
 import(path : "onshape/std/units.fs", version : "951.0");
 import(path : "onshape/std/valueBounds.fs", version : "951.0");
+import(path : "onshape/std/sheetMetalEnd.fs", version : "951.0");
+import(path : "onshape/std/sheetMetalUtils.fs", version : "951.0");
 import(path : "onshape/std/vector.fs", version : "951.0");
 
 // Bounds and enums {
@@ -152,7 +154,10 @@ export enum FilletCornerShape
 
 // Bounds and enums }
 
-annotation { "Feature Type Name" : "Weld", "Editing Logic Function" : "CodeELWeld" }
+annotation { "Feature Type Name" : "Weld", 
+        "Editing Logic Function" : "CodeELWeld",
+        "Feature Name Template" : "Weld (#weldName)"
+    }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
@@ -368,6 +373,8 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         }
         else
             throw regenError("Weld failed");
+                
+    setFeatureComputedParameter(context, id, { "name" : "weldName", "value" : getFeatureName(context, definition)});
     },
         {
             weldFeatureSettingsSelection : WeldFeatureSettingsSelection.SHOW_ALL,
@@ -841,6 +848,24 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
                     evEdgeTangentLine(context, { "edge" : edge1, "parameter" : 0.5 }).origin
                 )
             )[0];
+                
+        // Sheet metal end
+        if (queryContainsActiveSheetMetal(context, part1))
+        {
+            sheetMetalEnd(context, subId + "smEnd1", { "sheetMetalParts" : part1 });
+            processSubfeatureStatus(context, id, {
+                        "subfeatureId" : subId + "smEnd1",
+                        "propagateErrorDisplay" : true
+                    });
+        }
+        if (queryContainsActiveSheetMetal(context, part2))
+        {
+            sheetMetalEnd(context, subId + "smEnd2", { "sheetMetalParts" : part2 });
+            processSubfeatureStatus(context, id, {
+                        "subfeatureId" : subId + "smEnd2",
+                        "propagateErrorDisplay" : true
+                    });
+        }
 
         // Find closest faces
         var faces1 = evaluateQuery(context, qEdgeAdjacent(edge1, EntityType.FACE));
@@ -1667,6 +1692,42 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
                 });
     }
     setVariable(context, weldVariableName, num);
+}
+                    
+function getFeatureName(context is Context, definition is map) returns string
+{
+    var weldTypeStr = "";
+
+    if (definition.weldType == WeldType.FILLET_WELD)
+        weldTypeStr = "Fillet";
+    else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+        weldTypeStr = "Square Butt";
+    else if (definition.weldType == WeldType.V_BUTT_WELD)
+        weldTypeStr = "V-Butt";
+    else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+        weldTypeStr = "Bevel Butt";
+    else if (definition.weldType == WeldType.U_BUTT_WELD)
+        weldTypeStr = "U-Butt";
+    else if (definition.weldType == WeldType.J_BUTT_WELD)
+        weldTypeStr = "J-Butt";
+    else if (definition.weldType == WeldType.SCARF_BUTT_WELD)
+        weldTypeStr = "Scarf Butt";
+
+    if (definition.buttOtherSide && definition.weldType != WeldType.FILLET_WELD && definition.weldType != WeldType.SCARF_BUTT_WELD)
+    {
+        if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
+            weldTypeStr ~= "/Square Butt";
+        else if (definition.weldType2 == WeldType2.V_BUTT_WELD)
+            weldTypeStr ~= "/V-Butt";
+        else if (definition.weldType2 == WeldType2.BEVEL_BUTT_WELD)
+            weldTypeStr ~= "/Bevel Butt";
+        else if (definition.weldType2 == WeldType2.U_BUTT_WELD)
+            weldTypeStr ~= "/U-Butt";
+        else if (definition.weldType2 == WeldType2.J_BUTT_WELD)
+            weldTypeStr ~= "/J-Butt";
+    }
+
+    return weldTypeStr;
 }
 
 function startTrackingSweep(context is Context, sketchId is Id, sketchEntityId is string, path is Query) returns Query
