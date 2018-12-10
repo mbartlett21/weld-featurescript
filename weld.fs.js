@@ -150,7 +150,7 @@ export enum FilletCornerShape
 // Bounds and enums }
 
 annotation { "Feature Type Name" : "Weld", 
-        "Editing Logic Function" : "C2iCodeELSoldaduras",
+        "Editing Logic Function" : "CodeELWeld",
         "Feature Name Template" : "Weld (#weldName)"
     }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
@@ -1607,32 +1607,32 @@ function getFeatureName(context is Context, definition is map) returns string
     var weldTypeStr = "";
 
     if (definition.weldType == WeldType.FILLET_WELD)
-        weldTypeStr = "Redondeo";
+        weldTypeStr = "Fillet";
     else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
-        weldTypeStr = "Tope Recta";
+        weldTypeStr = "Square Butt";
     else if (definition.weldType == WeldType.V_BUTT_WELD)
-        weldTypeStr = "Tope V";
+        weldTypeStr = "V-Butt";
     else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
-        weldTypeStr = "Tope Bisel";
+        weldTypeStr = "Bevel Butt";
     else if (definition.weldType == WeldType.U_BUTT_WELD)
-        weldTypeStr = "Tope U";
+        weldTypeStr = "U-Butt";
     else if (definition.weldType == WeldType.J_BUTT_WELD)
-        weldTypeStr = "Tope J";
+        weldTypeStr = "J-Butt";
     else if (definition.weldType == WeldType.SCARF_BUTT_WELD)
-        weldTypeStr = "Tope Inclinada";
+        weldTypeStr = "Scarf Butt";
 
     if (definition.buttOtherSide && definition.weldType != WeldType.FILLET_WELD && definition.weldType != WeldType.SCARF_BUTT_WELD)
     {
         if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
-            weldTypeStr ~= "/Tope";
+            weldTypeStr ~= "/Square Butt";
         else if (definition.weldType2 == WeldType2.V_BUTT_WELD)
-            weldTypeStr ~= "/Tope V";
+            weldTypeStr ~= "/V-Butt";
         else if (definition.weldType2 == WeldType2.BEVEL_BUTT_WELD)
-            weldTypeStr ~= "/Tope Bisel";
+            weldTypeStr ~= "/Bevel Butt";
         else if (definition.weldType2 == WeldType2.U_BUTT_WELD)
-            weldTypeStr ~= "/Tope U";
+            weldTypeStr ~= "/U-Butt";
         else if (definition.weldType2 == WeldType2.J_BUTT_WELD)
-            weldTypeStr ~= "/Tope J";
+            weldTypeStr ~= "/J-Butt";
     }
 
     return weldTypeStr;
