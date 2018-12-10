@@ -846,10 +846,18 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
         if (queryContainsActiveSheetMetal(context, part1))
         {
             sheetMetalEnd(context, subId + "smEnd1", { "sheetMetalParts" : part1 });
+            processSubfeatureStatus(context, id, {
+                        "subfeatureId" : subId + "smEnd1",
+                        "propagateErrorDisplay" : true
+                    });
         }
         if (queryContainsActiveSheetMetal(context, part2))
         {
             sheetMetalEnd(context, subId + "smEnd2", { "sheetMetalParts" : part2 });
+            processSubfeatureStatus(context, id, {
+                        "subfeatureId" : subId + "smEnd2",
+                        "propagateErrorDisplay" : true
+                    });
         }
 
         // Find closest faces
