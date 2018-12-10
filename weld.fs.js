@@ -57,6 +57,7 @@ export enum WeldFeatureSettingsSelection
  * @value BEVEL_BUTT_WELD : Square Butt weld.
  * @value U_BUTT_WELD : U-Butt weld.
  * @value J_BUTT_WELD : J-Butt weld.
+ * @value SCARF_BUTT_WELD : Scarf Butt weld.
  */
 export enum WeldType
 {
@@ -71,7 +72,9 @@ export enum WeldType
     annotation { "Name" : "U-Butt weld" }
     U_BUTT_WELD,
     annotation { "Name" : "J-Butt weld" }
-    J_BUTT_WELD
+    J_BUTT_WELD,
+    annotation { "Name" : "Scarf Butt weld" }
+    SCARF_BUTT_WELD
 }
 
 /**
@@ -119,7 +122,7 @@ export enum WeldShape
  * Specifies the dimension of the Fillet welding.
  * @value SIDE : Weld side (z).
  * @value HEIGHT : Weld height (a).
- * @value PERPENDICULAR : Perpendicular distance.
+ * @value PERPENDICULAR : Distance perpendicular to the first face.
  */
 export enum FilletDimension
 {
@@ -198,16 +201,19 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
                 definition.buttShape is WeldShape;
 
-                if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+                if (definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.SCARF_BUTT_WELD)
                 {
                     annotation { "Name" : "Distance", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
                     isLength(definition.buttDist, BLEND_BOUNDS);
                 }
 
-                annotation { "Name" : "Bevel angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                isAngle(definition.buttAngle, ANGLE_STRICT_90_BOUNDS);
+                if (definition.weldType != WeldType.SQUARE_BUTT_WELD)
+                {
+                    annotation { "Name" : "Bevel angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                    isAngle(definition.buttAngle, ANGLE_STRICT_90_BOUNDS);
+                }
 
-                if (definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
+                if (definition.weldType == WeldType.SCARF_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
                 {
                     annotation { "Name" : "Opposite direction", "UIHint" : "OPPOSITE_DIRECTION" }
                     definition.oppositeDirection is boolean;
@@ -225,8 +231,11 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     isLength(definition.buttOffset, BLEND_BOUNDS);
                 }
 
-                annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
-                definition.buttRootGap is boolean;
+                if (definition.weldType != WeldType.SCARF_BUTT_WELD)
+                {
+                    annotation { "Name" : "Root Gap", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
+                    definition.buttRootGap is boolean;
+                }
 
                 if (definition.buttRootGap)
                 {
@@ -237,10 +246,13 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                     isLength(definition.buttRootGapHeight, ZERO_INCLUSIVE_OFFSET_BOUNDS);
                 }
 
-                annotation { "Name" : "Other side", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
-                definition.buttOtherSide is boolean;
+                if (definition.weldType != WeldType.SCARF_BUTT_WELD)
+                {
+                    annotation { "Name" : "Other side", "UIHint" : "REMEMBER_PREVIOUS_VALUE", "Default" : false }
+                    definition.buttOtherSide is boolean;
+                }
 
-                if (definition.buttOtherSide)
+                if (definition.buttOtherSide  && definition.weldType != WeldType.SCARF_BUTT_WELD)
                 {
                     annotation { "Name" : "Weld Type", "UIHint" : "SHOW_LABEL" }
                     definition.weldType2 is WeldType2;
@@ -256,10 +268,13 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                             isLength(definition.buttDist2, BLEND_BOUNDS);
                         }
 
-                        annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
-                        isAngle(definition.buttAngle2, ANGLE_STRICT_90_BOUNDS);
+                        if (definition.weldType2 != WeldType2.SQUARE_BUTT_WELD)
+                        {
+                            annotation { "Name" : "Angle", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
+                            isAngle(definition.buttAngle2, ANGLE_STRICT_90_BOUNDS);
+                        }
 
-                        if (definition.weldType2 == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
+                        if (definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD)
                         {
                             annotation { "Name" : "Opposite direction", "UIHint" : "OPPOSITE_DIRECTION" }
                             definition.oppositeDirection2 is boolean;
