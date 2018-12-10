@@ -1217,14 +1217,13 @@ function sketchBevelButtWeld(context is Context, definition is map, thickness is
 }
 
 // /**
-//  * TODO: Square Butt Weld Sketch
+//  * Square Butt Weld Sketch
 //  */
 function sketchSquareButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
 {
     var shape = definition.buttShape;
     var offset = definition.buttOffset;
     var buttDist = definition.buttDist;
-    var angle = definition.buttAngle;
     var rootGap = definition.buttRootGap;
     var rootGapWidth = definition.buttRootGapWidth;
     var rootGapHeight = definition.buttRootGapHeight;
@@ -1234,13 +1233,12 @@ function sketchSquareButtWeld(context is Context, definition is map, thickness i
         shape = definition.buttShape2;
         offset = definition.buttOffset2;
         buttDist = definition.buttDist2;
-        angle = definition.buttAngle2;
         rootGap = definition.buttRootGap2;
         rootGapWidth = definition.buttRootGapWidth2;
         rootGapHeight = definition.buttRootGapHeight2;
     }
 
-    var distOut = definition.buttDist / 2.0;
+    var distOut = buttDist / 2;
 
     if (shape == WeldShape.FLAT)
     {
