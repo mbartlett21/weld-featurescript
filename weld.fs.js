@@ -24,6 +24,8 @@ import(path : "onshape/std/surfaceGeometry.fs", version : "951.0");
 import(path : "onshape/std/topologyUtils.fs", version : "951.0");
 import(path : "onshape/std/units.fs", version : "951.0");
 import(path : "onshape/std/valueBounds.fs", version : "951.0");
+import(path : "onshape/std/sheetMetalEnd.fs", version : "951.0");
+import(path : "onshape/std/sheetMetalUtils.fs", version : "951.0");
 import(path : "onshape/std/vector.fs", version : "951.0");
 
 // Bounds and enums {
@@ -844,6 +846,24 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
                     evEdgeTangentLine(context, { "edge" : edge1, "parameter" : 0.5 }).origin
                 )
             )[0];
+                
+        // Sheet metal end
+        if (queryContainsActiveSheetMetal(context, part1))
+        {
+            sheetMetalEnd(context, subId + "smEnd1", { "sheetMetalParts" : part1 });
+            processSubfeatureStatus(context, id, {
+                        "subfeatureId" : subId + "smEnd1",
+                        "propagateErrorDisplay" : true
+                    });
+        }
+        if (queryContainsActiveSheetMetal(context, part2))
+        {
+            sheetMetalEnd(context, subId + "smEnd2", { "sheetMetalParts" : part2 });
+            processSubfeatureStatus(context, id, {
+                        "subfeatureId" : subId + "smEnd2",
+                        "propagateErrorDisplay" : true
+                    });
+        }
 
         // Find closest faces
         var faces1 = evaluateQuery(context, qEdgeAdjacent(edge1, EntityType.FACE));
