@@ -149,7 +149,10 @@ export enum FilletCornerShape
 
 // Bounds and enums }
 
-annotation { "Feature Type Name" : "Weld", "Editing Logic Function" : "CodeELWeld" }
+annotation { "Feature Type Name" : "Weld", 
+        "Editing Logic Function" : "C2iCodeELSoldaduras",
+        "Feature Name Template" : "Weld (#weldName)"
+    }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
@@ -353,6 +356,8 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         }
         else
             throw regenError("Weld failed");
+                
+    setFeatureComputedParameter(context, id, { "name" : "weldName", "value" : getFeatureName(context, definition)});
     },
         {
             weldFeatureSettingsSelection : WeldFeatureSettingsSelection.SHOW_ALL,
@@ -1595,6 +1600,42 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
                 });
     }
     setVariable(context, weldVariableName, num);
+}
+                    
+function getFeatureName(context is Context, definition is map) returns string
+{
+    var weldTypeStr = "";
+
+    if (definition.weldType == WeldType.FILLET_WELD)
+        weldTypeStr = "Redondeo";
+    else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
+        weldTypeStr = "Tope Recta";
+    else if (definition.weldType == WeldType.V_BUTT_WELD)
+        weldTypeStr = "Tope V";
+    else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+        weldTypeStr = "Tope Bisel";
+    else if (definition.weldType == WeldType.U_BUTT_WELD)
+        weldTypeStr = "Tope U";
+    else if (definition.weldType == WeldType.J_BUTT_WELD)
+        weldTypeStr = "Tope J";
+    else if (definition.weldType == WeldType.SCARF_BUTT_WELD)
+        weldTypeStr = "Tope Inclinada";
+
+    if (definition.buttOtherSide && definition.weldType != WeldType.FILLET_WELD && definition.weldType != WeldType.SCARF_BUTT_WELD)
+    {
+        if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
+            weldTypeStr ~= "/Tope";
+        else if (definition.weldType2 == WeldType2.V_BUTT_WELD)
+            weldTypeStr ~= "/Tope V";
+        else if (definition.weldType2 == WeldType2.BEVEL_BUTT_WELD)
+            weldTypeStr ~= "/Tope Bisel";
+        else if (definition.weldType2 == WeldType2.U_BUTT_WELD)
+            weldTypeStr ~= "/Tope U";
+        else if (definition.weldType2 == WeldType2.J_BUTT_WELD)
+            weldTypeStr ~= "/Tope J";
+    }
+
+    return weldTypeStr;
 }
 
 function startTrackingSweep(context is Context, sketchId is Id, sketchEntityId is string, path is Query) returns Query
