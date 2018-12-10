@@ -1581,42 +1581,16 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
     {
         num = getVariable(context, weldVariableName);
     }
+    var weldTypeString = getFeatureName(context, definition);
     var welds = evaluateQuery(context, weld);
-    var weldTypeStr = "";
     for (var weld in welds)
     {
         num += 1;
-        if (definition.weldType == WeldType.FILLET_WELD)
-            weldTypeStr = "Fillet";
-        else if (definition.weldType == WeldType.V_BUTT_WELD)
-            weldTypeStr = "V-Butt";
-        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
-            weldTypeStr = "Bevel Butt";
-        else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
-            weldTypeStr = "Square Butt";
-        else if (definition.weldType == WeldType.U_BUTT_WELD)
-            weldTypeStr = "U-Butt";
-        else if (definition.weldType == WeldType.J_BUTT_WELD)
-            weldTypeStr = "J-Butt";
-                
-        if (definition.buttOtherSide && definition.weldType != WeldType.FILLET_WELD)
-        {
-            if (definition.weldType2 == WeldType2.V_BUTT_WELD)
-                weldTypeStr ~= "/V-Butt";
-            else if (definition.weldType2 == WeldType2.BEVEL_BUTT_WELD)
-                weldTypeStr ~= "/Bevel Butt";
-            else if (definition.weldType2 == WeldType2.SQUARE_BUTT_WELD)
-                weldTypeStr ~= "/Square Butt";
-            else if (definition.weldType2 == WeldType2.U_BUTT_WELD)
-                weldTypeStr ~= "/U-Butt";
-            else if (definition.weldType2 == WeldType2.J_BUTT_WELD)
-                weldTypeStr ~= "/J-Butt";
-        }
                 
         setProperty(context, {
                     "entities" : weld,
                     "propertyType" : PropertyType.NAME,
-                    "value" : "Weld " ~ num ~ " (" ~ weldTypeStr ~ ")"
+                    "value" : "Weld " ~ num ~ " (" ~ weldTypeString ~ ")"
                 });
     }
     setVariable(context, weldVariableName, num);
