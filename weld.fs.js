@@ -683,7 +683,6 @@ function filletWeldNonPlanarPlanar(context is Context, id is Id, definition is m
         distResult.sides[0].point
     );
 
-
     var intersectionLine = intersection(face1Plane, face2Plane);
 
     var skPlane = plane(project(intersectionLine, distResult.sides[0].point), intersectionLine.direction);
