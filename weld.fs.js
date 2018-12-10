@@ -1569,7 +1569,7 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
 // /**
 //  * Scarf Butt Weld Sketch
 //  */
-function sketchScarfButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
+function sketchScarfButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch)
 {
     var shape = definition.buttShape;
     var offset = definition.buttOffset;
