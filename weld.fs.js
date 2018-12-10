@@ -1371,7 +1371,7 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
     {
         skArc(profileSketch, "topLine", {
                     "start" : vector(0 * meter, 0 * meter),
-                    "mid" : vector(distOut / 2.0, -offset),
+                    "mid" : vector(distOut / 2, -offset),
                     "end" : vector(distOut, 0 * meter)
                 });
     }
