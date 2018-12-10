@@ -1581,6 +1581,7 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
     {
         num = getVariable(context, weldVariableName);
     }
+    var weldTypeString = getFeatureName(context, definition);
     var welds = evaluateQuery(context, weld);
     for (var weld in welds)
     {
@@ -1589,7 +1590,7 @@ function setWeldNumbers(context is Context, definition is map, weld is Query)
         setProperty(context, {
                     "entities" : weld,
                     "propertyType" : PropertyType.NAME,
-                    "value" : "Weld " ~ num ~ " (" ~ getFeatureName(context, definition) ~ ")"
+                    "value" : "Weld " ~ num ~ " (" ~ weldTypeString ~ ")"
                 });
     }
     setVariable(context, weldVariableName, num);
