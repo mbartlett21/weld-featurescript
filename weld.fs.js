@@ -1,4 +1,4 @@
-FeatureScript 951;
+FeatureScript 961;
 
 /**
  * This module is distributed under the MIT License.
@@ -8,25 +8,25 @@ FeatureScript 951;
  */
 
 // Imported Enums
-import(path : "onshape/std/booleanoperationtype.gen.fs", version : "951.0");
-import(path : "onshape/std/boundingtype.gen.fs", version : "951.0");
+import(path : "onshape/std/booleanoperationtype.gen.fs", version : "961.0");
+import(path : "onshape/std/boundingtype.gen.fs", version : "961.0");
 
 // Imports used internally
-import(path : "onshape/std/containers.fs", version : "951.0");
-import(path : "onshape/std/curveGeometry.fs", version : "951.0");
-import(path : "onshape/std/evaluate.fs", version : "951.0");
-import(path : "onshape/std/feature.fs", version : "951.0");
-import(path : "onshape/std/geomOperations.fs", version : "951.0");
-import(path : "onshape/std/math.fs", version : "951.0");
-import(path : "onshape/std/properties.fs", version : "951.0");
-import(path : "onshape/std/sketch.fs", version : "951.0");
-import(path : "onshape/std/surfaceGeometry.fs", version : "951.0");
-import(path : "onshape/std/topologyUtils.fs", version : "951.0");
-import(path : "onshape/std/units.fs", version : "951.0");
-import(path : "onshape/std/valueBounds.fs", version : "951.0");
-import(path : "onshape/std/sheetMetalEnd.fs", version : "951.0");
-import(path : "onshape/std/sheetMetalUtils.fs", version : "951.0");
-import(path : "onshape/std/vector.fs", version : "951.0");
+import(path : "onshape/std/containers.fs", version : "961.0");
+import(path : "onshape/std/curveGeometry.fs", version : "961.0");
+import(path : "onshape/std/evaluate.fs", version : "961.0");
+import(path : "onshape/std/feature.fs", version : "961.0");
+import(path : "onshape/std/geomOperations.fs", version : "961.0");
+import(path : "onshape/std/math.fs", version : "961.0");
+import(path : "onshape/std/properties.fs", version : "961.0");
+import(path : "onshape/std/sketch.fs", version : "961.0");
+import(path : "onshape/std/surfaceGeometry.fs", version : "961.0");
+import(path : "onshape/std/topologyUtils.fs", version : "961.0");
+import(path : "onshape/std/units.fs", version : "961.0");
+import(path : "onshape/std/valueBounds.fs", version : "961.0");
+import(path : "onshape/std/sheetMetalEnd.fs", version : "961.0");
+import(path : "onshape/std/sheetMetalUtils.fs", version : "961.0");
+import(path : "onshape/std/vector.fs", version : "961.0");
 
 // Bounds and enums {
 /**
