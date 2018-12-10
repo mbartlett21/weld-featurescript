@@ -1179,23 +1179,50 @@ function sketchBevelButtWeld(context is Context, definition is map, thickness is
 function sketchSquareButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
 {
     var shape = definition.buttShape;
+    var offset = definition.buttOffset;
+    var buttDist = definition.buttDist;
+    var angle = definition.buttAngle;
     var rootGap = definition.buttRootGap;
     var rootGapWidth = definition.buttRootGapWidth;
     var rootGapHeight = definition.buttRootGapHeight;
+            
+    if (side2)
+    {
+        shape = definition.buttShape2;
+        offset = definition.buttOffset2;
+        buttDist = definition.buttDist2;
+        angle = definition.buttAngle2;
+        rootGap = definition.buttRootGap2;
+        rootGapWidth = definition.buttRootGapWidth2;
+        rootGapHeight = definition.buttRootGapHeight2;
+    }
 
     var distOut = definition.buttDist / 2.0;
 
     if (shape == WeldShape.FLAT)
+    {
         skLineSegment(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
                     "end" : vector(distOut, 0 * meter)
                 });
-    else
+    }
+    else if (shape == WeldShape.CONVEX)
+    {
         skArc(profileSketch, "topLine", {
                     "start" : vector(-distOut, 0 * meter),
-                    "mid" : vector(0 * meter, distOut / 5),
+                    "mid" : vector(0 * meter, offset),
                     "end" : vector(distOut, 0 * meter)
                 });
+    }
+    else
+    {
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, -offset),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    }
+            
     if (rootGap)
     {
         skLineSegment(profileSketch, "bottomLine", {
