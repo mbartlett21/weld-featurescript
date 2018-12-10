@@ -971,7 +971,7 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
 
         if (definition.buttOtherSide && definition.weldType2 != WeldType2.NONE_BUTT_WELD)
         {
-            var skPlaneB = plane(skPlane.origin + thickness * 2.0 * extractDirection(context, thicknessEdge), edge1Line.direction, -xAxis);
+            var skPlaneB = plane(skPlane.origin -thickness * 2 * yAxis(skPlane), edge1Line.direction, -xAxis);
             var profileSketchB = newSketchOnPlane(context, subId + "profileSketchB", {
                     "sketchPlane" : skPlaneB
                 });
