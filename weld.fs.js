@@ -989,14 +989,14 @@ function buttWeld(context is Context, id is Id, definition is map, toDelete is b
                 });
                 
         var angle = definition.buttAngle;
-        if (definition.weldType == WeldType.SCARF_BUTT_WELD && angle > 0.0 * degree)
+        if (definition.weldType == WeldType.SCARF_BUTT_WELD && !tolerantEquals(angle, 0 * radian))
         {
-            if (definition.oppositeDirection)
+            if (!definition.oppositeDirection)
                 angle = -angle;
-                    
+
             opMoveFace(context, subId + "moveFace1", {
                         "moveFaces" : qUnion([face1, face2]),
-                        "transform" : rotationAround(evAxis(context, { "axis" : edge1 }), angle)
+                        "transform" : rotationAround(line(skPlane.origin, edge1Line.direction), angle)
                     });
         }
                 
