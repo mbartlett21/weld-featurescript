@@ -1710,6 +1710,8 @@ function getFeatureName(context is Context, definition is map) returns string
         weldTypeStr = "U-Butt";
     else if (definition.weldType == WeldType.J_BUTT_WELD)
         weldTypeStr = "J-Butt";
+    else if (definition.weldType == WeldType.SCARF_BUTT_WELD && tolerantEquals(definition.buttAngle, 0 * radian))
+        weldTypeStr = "Square Butt"; // It is a square butt if the angle is 0
     else if (definition.weldType == WeldType.SCARF_BUTT_WELD)
         weldTypeStr = "Scarf Butt";
 
