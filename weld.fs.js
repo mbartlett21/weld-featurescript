@@ -1355,7 +1355,7 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
     if (shape == WeldShape.FLAT)
     {
         skLineSegment(profileSketch, "topLine", {
-                    "start" : vector(0 * meter, 0 * meter),
+                    "start" : vector(0, 0) * meter,
                     "end" : vector(distOut, 0 * meter)
                 });
     }
