@@ -1396,7 +1396,7 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
                     "end" : vector((oppDir * rootGapWidth) + (oppDir * radius * cos(-angle)), -thickness + radius + (radius * sin(-angle)) + rootGapHeight)
                 });
         skLineSegment(profileSketch, "sideLine2", {
-                    "start" : vector((oppDir * rootGapWidth) + (oppDir * radius * cos(-angle)), -thickness + radius + (radius * sin(-angle)) + rootGapHeight),
+                    "start" : vector(oppDir * (rootGapWidth + radius * cos(-angle)), -thickness + radius + (radius * sin(-angle)) + rootGapHeight),
                     "end" : vector(distOut, 0 * meter)
                 });
     }
