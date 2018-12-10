@@ -1348,7 +1348,7 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
     var oppDir = 1;
     if (side2 && definition.oppositeDirection2 || !side2 && definition.oppositeDirection)
     {
-        oppDir = -1 * oppDir;
+        oppDir *= -1;
         distOut = -distOut;
     }
 
