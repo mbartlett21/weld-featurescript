@@ -1540,6 +1540,61 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
                 });
     }
 }
+                    
+// /**
+//  * Scarf Butt Weld Sketch
+//  */
+function sketchScarfButtWeld(context is Context, definition is map, thickness is ValueWithUnits, profileSketch is Sketch, side2 is boolean)
+{
+    var shape = definition.buttShape;
+    var offset = definition.buttOffset;
+    var buttDist = definition.buttDist;
+    var angle = definition.buttAngle;
+            
+    var distOut = buttDist / 2.0;
+            
+    if (definition.oppositeDirection)
+    {
+        distOut = -distOut;
+        angle = -angle;
+    }
+
+    if (shape == WeldShape.FLAT)
+    {
+        skLineSegment(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    }
+    else if (shape == WeldShape.CONVEX)
+    {
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, offset),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    }
+    else
+    {
+        skArc(profileSketch, "topLine", {
+                    "start" : vector(-distOut, 0 * meter),
+                    "mid" : vector(0 * meter, -offset),
+                    "end" : vector(distOut, 0 * meter)
+                });
+    }
+    skLineSegment(profileSketch, "sideLine1", {
+                "start" : vector(-distOut, 0 * meter),
+                "end" : vector(-distOut - thickness * tan(angle), -thickness)
+            });
+    skLineSegment(profileSketch, "sideLine2", {
+                "start" : vector(distOut, 0 * meter),
+                "end" : vector(distOut - thickness * tan(angle), -thickness)
+            });
+    skLineSegment(profileSketch, "bottomLine", {
+                "start" : vector(-distOut - thickness * tan(angle), -thickness),
+                "end" : vector(distOut - thickness * tan(angle), -thickness)
+            });
+}
 
 // Butt Weld functions }
 
