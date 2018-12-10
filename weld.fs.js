@@ -334,7 +334,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         {
             filletWeld(context, id, definition, toDelete);
         }
-        else if (definition.weldType == WeldType.V_BUTT_WELD || definition.weldType == WeldType.BEVEL_BUTT_WELD || definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD)
+        else if (definition.weldType == WeldType.SQUARE_BUTT_WELD || definition.weldType == WeldType.V_BUTT_WELD ||definition.weldType == WeldType.BEVEL_BUTT_WELD || definition.weldType == WeldType.U_BUTT_WELD || definition.weldType == WeldType.J_BUTT_WELD || definition.weldType == WeldType.SCARF_BUTT_WELD)
         {
             buttWeld(context, id, definition, toDelete);
         }
@@ -385,26 +385,16 @@ export function CodeELWeld(context is Context, id is Id, oldDefinition is map, d
 {
     if (definition.weldType != WeldType.FILLET_WELD && definition.weldType != oldDefinition.weldType)
     {
-        if (definition.weldType == WeldType.V_BUTT_WELD)
-        {
-            definition.weldType2 = WeldType2.V_BUTT_WELD;
-        }
-        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
-        {
-            definition.weldType2 = WeldType2.BEVEL_BUTT_WELD;
-        }
-        else if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
-        {
+        if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
             definition.weldType2 = WeldType2.SQUARE_BUTT_WELD;
-        }
+        else if (definition.weldType == WeldType.V_BUTT_WELD)
+            definition.weldType2 = WeldType2.V_BUTT_WELD;
+        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
+            definition.weldType2 = WeldType2.BEVEL_BUTT_WELD;
         else if (definition.weldType == WeldType.U_BUTT_WELD)
-        {
             definition.weldType2 = WeldType2.U_BUTT_WELD;
-        }
         else if (definition.weldType == WeldType.J_BUTT_WELD)
-        {
             definition.weldType2 = WeldType2.J_BUTT_WELD;
-        }
     }
 
     if (definition.filletShape != WeldShape.FLAT && !specifiedParameters.filletOffset)
