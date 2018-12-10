@@ -1337,7 +1337,7 @@ function sketchJButtWeld(context is Context, definition is map, thickness is Val
         rootGapHeight = definition.buttRootGapHeight2;
     }
             
-    var ang1 = (-angle - (((90 * degree) - angle) / 2.0));
+    var ang1 = -angle/2 - 45 * degree;
     var distBase = thickness - radius - (radius * sin(-angle));
     var distOut = (radius * cos(-angle)) + (distBase * tan(angle));
     if (rootGap)
