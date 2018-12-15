@@ -387,7 +387,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 /**
  * Editing Logic Function
  */
-export function CodeELWeld(context is Context, id is Id, oldDefinition is map, definition is map,
+export function CodeELWeld(context is Context, id is Id, oldDefinition is map, definition is map, isCreating is boolean,
     specifiedParameters is map, hiddenBodies is Query) returns map
 {
     if (definition.weldType != WeldType.FILLET_WELD && definition.weldType != oldDefinition.weldType)
