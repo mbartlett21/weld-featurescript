@@ -37,21 +37,6 @@ export const DENSITY_BOUNDS = {
         } as RealBoundSpec;
 
 /**
- * Feature and settings options
- * @value FEATURE : Weld Feature.
- * @value SETTINGS : Weld Settings.
- */
-export enum WeldFeatureSettingsSelection
-{
-    annotation { "Name" : "Welds" }
-    FEATURE,
-    annotation { "Name" : "Settings" }
-    SETTINGS,
-    annotation { "Hidden" : true }
-    SHOW_ALL
-}
-
-/**
  * Specifies the type of welding.
  * @value FILLET_WELD : Fillet weld.
  * @value SQUARE_BUTT_WELD : Square Butt weld.
@@ -161,11 +146,8 @@ annotation { "Feature Type Name" : "Weld",
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
-        annotation { "Name" : "Weld Settings", "UIHint" : ["HORIZONTAL_ENUM", "REMEMBER_PREVIOUS_VALUE"] }
-        definition.WeldFeatureSettingsSelection is WeldFeatureSettingsSelection;
-
-        if (definition.WeldFeatureSettingsSelection != WeldFeatureSettingsSelection.SETTINGS)
-        {
+         annotation { "Group Name" : "Welds", "Collapsed By Default" : false }
+         {
             annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
             definition.weldType is WeldType;
 
@@ -312,7 +294,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
                 }
             }
         }
-        else
+        annotation { "Group Name" : "Weld properties" }
         {
             annotation { "Name" : "Density (g/cm^3)", "UIHint" : "REMEMBER_PREVIOUS_VALUE" }
             isReal(definition.density, DENSITY_BOUNDS);
@@ -377,7 +359,6 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
         setFeatureComputedParameter(context, id, { "name" : "weldName", "value" : getFeatureName(context, definition) });
     },
         {
-            weldFeatureSettingsSelection : WeldFeatureSettingsSelection.SHOW_ALL,
             filletPropagation : false,
         }
     );
