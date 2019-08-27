@@ -140,7 +140,7 @@ export enum FilletCornerShape
 // Bounds and enums }
 
 annotation { "Feature Type Name" : "Weld",
-        "Editing Logic Function" : "CodeELWeld",
+        "Editing Logic Function" : "weldEditLogic",
         "Feature Name Template" : "Weld (#weldName)"
     }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
@@ -368,32 +368,25 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 /**
  * Editing Logic Function
  */
-export function CodeELWeld(context is Context, id is Id, oldDefinition is map, definition is map,
-    specifiedParameters is map, hiddenBodies is Query) returns map
+export function weldEditLogic(context is Context, id is Id, oldDefinition is map, definition is map,
+    specifiedParameters is map) returns map
 {
-    if (definition.weldType != WeldType.FILLET_WELD && definition.weldType != oldDefinition.weldType)
+    if (!specifiedParameters.weldType2 && definition.weldType != WeldType.FILLET_WELD && definition.weldType != WeldType.SCARF_BUTT_WELD && definition.weldType != oldDefinition.weldType)
+    try
     {
-        if (definition.weldType == WeldType.SQUARE_BUTT_WELD)
-            definition.weldType2 = WeldType2.SQUARE_BUTT_WELD;
-        else if (definition.weldType == WeldType.V_BUTT_WELD)
-            definition.weldType2 = WeldType2.V_BUTT_WELD;
-        else if (definition.weldType == WeldType.BEVEL_BUTT_WELD)
-            definition.weldType2 = WeldType2.BEVEL_BUTT_WELD;
-        else if (definition.weldType == WeldType.U_BUTT_WELD)
-            definition.weldType2 = WeldType2.U_BUTT_WELD;
-        else if (definition.weldType == WeldType.J_BUTT_WELD)
-            definition.weldType2 = WeldType2.J_BUTT_WELD;
+        definition.weldType2 = definition.weldType as WeldType2;
     }
 
-    if (definition.filletShape != WeldShape.FLAT && !specifiedParameters.filletOffset)
-    {
-        definition.filletOffset = definition.filletSize / 5.0;
-    }
-
+    // This is for selection for fillet weld (it auto-populates the second query with the first selection)
     if (definition.weldType == WeldType.FILLET_WELD && size(evaluateQuery(context, definition.filletEntities1)) >= 2 && evaluateQuery(context, definition.filletEntities2) == [])
     {
         definition.filletEntities2 = qNthElement(definition.filletEntities1, 0);
         definition.filletEntities1 = qSubtraction(definition.filletEntities1, definition.filletEntities2);
+    }
+    
+    if (!specifiedParameters.filletOffset && definition.filletShape != WeldShape.FLAT)
+    {
+        definition.filletOffset = definition.filletSize / 5.0;
     }
 
     return definition;
