@@ -140,23 +140,23 @@ export enum FilletCornerShape
 // Bounds and enums }
 
 annotation { "Feature Type Name" : "Weld",
-        "Editing Logic Function" : "CodeELWeld",
+        "Editing Logic Function" : "weldEditLogic",
         "Feature Name Template" : "Weld (#weldName)"
     }
 export const weld = defineFeature(function(context is Context, id is Id, definition is map)
     precondition
     {
-         annotation { "Group Name" : "Welds", "Collapsed By Default" : false }
-         {
+        annotation { "Group Name" : "Welds", "Collapsed By Default" : false }
+        {
             annotation { "Name" : "Weld Type", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
             definition.weldType is WeldType;
 
             if (definition.weldType == WeldType.FILLET_WELD)
             {
-                annotation { "Name" : "Faces in Side 1", "Filter" : EntityType.FACE }
+                annotation { "Name" : "Face in Side 1", "Filter" : EntityType.FACE }
                 definition.filletEntities1 is Query;
 
-                annotation { "Name" : "Face in Side 2", "Filter" : EntityType.FACE, "MaxNumberOfPicks" : 1 }
+                annotation { "Name" : "Faces in Side 2", "Filter" : EntityType.FACE }
                 definition.filletEntities2 is Query;
 
                 annotation { "Name" : "Shape", "UIHint" : ["REMEMBER_PREVIOUS_VALUE", "SHOW_LABEL"] }
@@ -368,7 +368,7 @@ export const weld = defineFeature(function(context is Context, id is Id, definit
 /**
  * Editing Logic Function
  */
-export function CodeELWeld(context is Context, id is Id, oldDefinition is map, definition is map,
+export function weldEditLogic(context is Context, id is Id, oldDefinition is map, definition is map,
     specifiedParameters is map, hiddenBodies is Query) returns map
 {
     if (definition.weldType != WeldType.FILLET_WELD && definition.weldType != oldDefinition.weldType)
@@ -388,12 +388,6 @@ export function CodeELWeld(context is Context, id is Id, oldDefinition is map, d
     if (definition.filletShape != WeldShape.FLAT && !specifiedParameters.filletOffset)
     {
         definition.filletOffset = definition.filletSize / 5.0;
-    }
-
-    if (definition.weldType == WeldType.FILLET_WELD && size(evaluateQuery(context, definition.filletEntities1)) >= 2 && evaluateQuery(context, definition.filletEntities2) == [])
-    {
-        definition.filletEntities2 = qNthElement(definition.filletEntities1, 0);
-        definition.filletEntities1 = qSubtraction(definition.filletEntities1, definition.filletEntities2);
     }
 
     return definition;
@@ -1700,7 +1694,6 @@ function roundEnds(context is Context, id is Id, endFaces is Query) returns Quer
     var faces = evaluateQuery(context, endFaces);
     var usedFaces = [];
     var counter = 0;
-    var toBoolean = [];
     for (var i = 0; i < size(faces); i += 1)
     {
         var face1 = faces[i];
@@ -1711,22 +1704,24 @@ function roundEnds(context is Context, id is Id, endFaces is Query) returns Quer
             var face2 = faces[j];
             if (isIn(j, usedFaces))
                 continue;
-            var collisions = evCollision(context, {
-                    "tools" : face1,
-                    "targets" : face2
-                });
-            if (collisions != [])
-                try
+            try
+            {
+                var collisions = evCollision(context, {
+                        "tools" : face1,
+                        "targets" : face2
+                    });
+                if (collisions != [])
                 {
-                    setExternalDisambiguation(context, id + unstableIdComponent(counter), qUnion([face1, face2]));
                     counter += 1;
-                    var round = doRound(context, id + unstableIdComponent(counter - 1), face1, face2);
-                    if (round is Query)
-                        toBoolean = append(toBoolean, round);
+                    setExternalDisambiguation(context, id + unstableIdComponent(counter), qUnion([face1, face2]));
+                    doRound(context, id + unstableIdComponent(counter), face1, face2);
+                    usedFaces = append(usedFaces, i);
+                    usedFaces = append(usedFaces, j);
                 }
+            }
         }
     }
-    return qUnion(toBoolean);
+    return qCreatedBy(id, EntityType.BODY);
 }
 
 function doRound(context is Context, id is Id, face1 is Query, face2 is Query) returns Query
@@ -1780,17 +1775,21 @@ function miterEnds(context is Context, id is Id, endFaces is Query)
             var face2 = faces[j];
             if (isIn(j, usedFaces))
                 continue;
-            var collisions = evCollision(context, {
-                    "tools" : face1,
-                    "targets" : face2
-                });
-            if (collisions != [])
-                try
+            try
+            {
+                var collisions = evCollision(context, {
+                        "tools" : face1,
+                        "targets" : face2
+                    });
+                if (collisions != [])
                 {
                     counter += 1;
                     setExternalDisambiguation(context, id + unstableIdComponent(counter), qUnion([face1, face2]));
                     doMiter(context, id + unstableIdComponent(counter), face1, face2);
+                    usedFaces = append(usedFaces, i);
+                    usedFaces = append(usedFaces, j);
                 }
+            }
         }
     }
 }
